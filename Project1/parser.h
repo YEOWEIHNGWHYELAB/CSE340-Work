@@ -15,6 +15,7 @@ class Parser {
     void readAndPrintAllInput();
   private:
     LexicalAnalyzer lexer;
+    void syntax_error_null();
     void syntax_error();
     Token expect(TokenType expected_type);
     void parse_tokens_section();
