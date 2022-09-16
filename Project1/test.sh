@@ -1,6 +1,14 @@
 #!/bin/bash
 
-g++ -std=c++11 parser.cc lexer.cc inputbuf.cc
+if g++ -std=c++11 -Wall parser.cc lexer.cc inputbuf.cc; then
+	echo "----------------------";
+	echo "Successfully Compiled!";
+else
+	echo "----------------------";
+	echo "Compilation Failed!";
+	echo "TEST TERMINATED!"
+	exit 1
+fi
 
 TEST_FOLDER="./provided_tests"
 
