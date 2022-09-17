@@ -1,14 +1,24 @@
 #!/bin/bash
 
-if g++ -std=c++11 -Wall parser.cc lexer.cc inputbuf.cc; then
+if g++ -std=c++11 -Wall parser.cc syntaxerror.cc lexer.cc mylexer.cc inputbuf.cc; then
 	echo "----------------------";
 	echo "Successfully Compiled!";
 else
 	echo "----------------------";
 	echo "Compilation Failed!";
-	echo "TEST TERMINATED!"
-	exit 1
-fi
+	
+	read -p "Do you want to continue test with previous a.out? Y/N " -n 1 -r;
+	if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+		echo; # move to a new line
+		echo;
+		echo "TEST TERMINATED!";
+		exit 1;
+	fi;
+
+	echo;
+	echo;
+	echo "Resuming Test with old a.out...";
+fi;
 
 TEST_FOLDER="./provided_tests"
 

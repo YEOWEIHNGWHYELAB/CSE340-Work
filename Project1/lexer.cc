@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) Rida Bazzi, 2019
  *           (C) Raha Moraffah 2018
  * Do not share this file with anyone
@@ -9,17 +9,33 @@
 #include <string>
 #include <cctype>
 
+#include <stdio.h>
+#include <sstream>
+#include <algorithm>
+
 #include "lexer.h"
 #include "inputbuf.h"
 
 using namespace std;
 
-string reserved[] = { "END_OF_FILE",
-    "LPAREN", "RPAREN", "HASH", "ID", "COMMA", "DOT", "STAR",
-    "OR", "UNDERSCORE", "SYMBOL", "CHAR", "INPUT_TEXT", "ERROR"};
+string reserved[] = { 
+    "END_OF_FILE",
+    "LPAREN", 
+    "RPAREN", 
+    "HASH", 
+    "ID", 
+    "COMMA", 
+    "DOT", 
+    "STAR",
+    "OR", 
+    "UNDERSCORE", 
+    "SYMBOL", 
+    "CHAR", 
+    "INPUT_TEXT", 
+    "ERROR"
+};
 
-void Token::Print()
-{
+void Token::Print() {
     cout << "{" << this->lexeme << " , "
          << reserved[(int) this->token_type] << " , "
          << this->line_no << "}\n";
@@ -27,8 +43,7 @@ void Token::Print()
 
 // The constructor function will get all token in the input and stores them in an
 // internal vector. This faciliates the implementation of peek()
-LexicalAnalyzer::LexicalAnalyzer()
-{
+LexicalAnalyzer::LexicalAnalyzer() {
     this->line_no = 1;
     tmp.lexeme = "";
     tmp.line_no = 1;
@@ -46,8 +61,7 @@ LexicalAnalyzer::LexicalAnalyzer()
 
 }
 
-bool LexicalAnalyzer::SkipSpace()
-{
+bool LexicalAnalyzer::SkipSpace() {
     char c;
     bool space_encountered = false;
 
@@ -66,8 +80,7 @@ bool LexicalAnalyzer::SkipSpace()
     return space_encountered;
 }
 
-Token LexicalAnalyzer::ScanIdOrChar()
-{
+Token LexicalAnalyzer::ScanIdOrChar() {
     char c;
     input.GetChar(c);
 
@@ -103,8 +116,7 @@ Token LexicalAnalyzer::ScanIdOrChar()
 }
 
 
-Token LexicalAnalyzer::ScanInput()
-{
+Token LexicalAnalyzer::ScanInput() {
     char c;
     input.GetChar(c);
     string lexeme = "";
@@ -146,8 +158,7 @@ Token LexicalAnalyzer::ScanInput()
     return tmp;
 }
 
-Token LexicalAnalyzer::ScanSymbol()
-{
+Token LexicalAnalyzer::ScanSymbol() {
     char c;
     input.GetChar(c);
     tmp.lexeme = "";
@@ -177,8 +188,7 @@ Token LexicalAnalyzer::ScanSymbol()
 
 // GetToken() accesses tokens from the tokenList that is populated when a 
 // lexer object is instantiated
-Token LexicalAnalyzer::GetToken()
-{
+Token LexicalAnalyzer::GetToken() {
     Token token;
     if (index == (int) tokenList.size()){       // return end of file if
         token.lexeme = "";                // index is too large
@@ -192,11 +202,8 @@ Token LexicalAnalyzer::GetToken()
     return token;
 }
 
-
-
 // peek requires that the argument "howFar" be positive.
-Token LexicalAnalyzer::peek(int howFar)
-{
+Token LexicalAnalyzer::peek(int howFar) {
     if (howFar <= 0) {      // peeking backward or in place is not allowed
         cout << "LexicalAnalyzer:peek:Error: non positive argument\n";
         exit(-1);
@@ -213,8 +220,7 @@ Token LexicalAnalyzer::peek(int howFar)
         return tokenList[peekIndex];
 }
 
-Token LexicalAnalyzer::GetTokenMain()
-{
+Token LexicalAnalyzer::GetTokenMain() {
     char c;
 
     SkipSpace();
@@ -240,9 +246,9 @@ Token LexicalAnalyzer::GetTokenMain()
                 return ScanInput();
         default:
             if (isdigit(c)) {
-                //CHAR
-                //input.UngetChar(c);
-                //return ScanNumber();
+                // CHAR
+                // input.UngetChar(c);
+                // return ScanNumber();
                 tmp.token_type = CHAR;
                 tmp.lexeme = c;
             } else if (isalpha(c)) {

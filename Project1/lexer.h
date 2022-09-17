@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) Rida Bazzi, 2019
  *
  * Do not share this file with anyone
@@ -7,16 +7,30 @@
 #define __LEXER__H__
 
 #include <vector>
+#include <set>
 #include <string>
 
 #include "inputbuf.h"
 
-// ------- token types -------------------
+using namespace std;
 
-typedef enum { END_OF_FILE = 0,
-    LPAREN, RPAREN, HASH, ID, COMMA, DOT, STAR,
-    OR, UNDERSCORE, SYMBOL, CHAR, INPUT_TEXT, ERROR
-    } TokenType;
+// ------- token types -------------------
+typedef enum { 
+  END_OF_FILE = 0,
+  LPAREN, 
+  RPAREN, 
+  HASH, 
+  ID, 
+  COMMA, 
+  DOT, 
+  STAR,
+  OR, 
+  UNDERSCORE, 
+  SYMBOL, 
+  CHAR, 
+  INPUT_TEXT, 
+  ERROR
+} TokenType;
 
 class Token {
   public:
