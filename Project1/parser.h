@@ -14,6 +14,8 @@
 class Parser {
   public:
     bool has_sem_error = false;
+    bool has_epsilon_error = false;
+    string curr_episilon_error = "";
     string current_token_name = "";
 
     void parse_input();

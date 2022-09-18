@@ -267,7 +267,8 @@ void Parser::parse_token() {
     set<RegNode> reachable_node_from_start = lexer_reg.match_one_char(current_reg_node_set, '_');
     current_reg_node_set.insert(reachable_node_from_start.begin(), reachable_node_from_start.end());
     if (current_reg_node_set.find(*reg->accept) != current_reg_node_set.end()) {
-        syntax_error_epsilon(current_token_reg.token_name);
+        has_epsilon_error = true;
+        curr_episilon_error += (" " + current_token_reg.token_name);
     }
 
     // Assign the TOKEN REG to myLexicalAnalyzer object
@@ -281,13 +282,13 @@ void Parser::parse_token_list() {
     parse_token();
     Token t = lexer.peek(1);
 
-    if (t.token_type == COMMA) {
+    if (t.token_type == COMMA) {        
         expect(COMMA);
         parse_token_list();
     } else if (t.token_type == HASH) {
         if (has_sem_error) {
             exit(1);
-        }
+        } 
 
         // End of token list
         return;
@@ -302,6 +303,10 @@ void Parser::parse_tokens_section() {
 
     // HASH is used to signal end of token 
     expect(HASH);
+
+    // Only if no syntax error then we will do epsilon error check
+    if (has_epsilon_error)
+        syntax_error_epsilon(curr_episilon_error);
 }
 
 /**
@@ -339,7 +344,7 @@ void Parser::parse_input() {
     if (input_text_without_quote.at(input_text_without_quote.size() - 1) == WHITE_SPACE) {
         formatted_input_str = formatted_input_str.substr(0, input_text_without_quote.size() - 1);
     }
-    
+
     // Parse input string
     lexer_reg.setCurrentInputString(formatted_input_str);
     lexer_reg.my_GetToken();
