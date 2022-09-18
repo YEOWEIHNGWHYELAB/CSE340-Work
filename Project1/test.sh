@@ -42,6 +42,9 @@ if [ ! -x "./a.out" ]; then
     exit 1
 fi
 
+echo "========================================================"
+echo "Start of Provided Test"
+
 let count=0
 let all=0
 
@@ -116,6 +119,42 @@ done
 
 echo
 echo "Passed $count tests out of $all"
+echo
+
+rmdir ./output
+
+echo "========================================================"
+echo "Start of My Test"
+
+let count=0
+let all=0
+
+mkdir -p ./output
+
+for test_file in $(find ./my_tests -type f -name "*.txt" | sort); do
+    all=$((all+1))
+    name=`basename ${test_file} .txt`
+    expected_file=${test_file}.expected
+    output_file=./output/${name}.output
+    diff_file=./output/${name}.diff
+    ./a.out < ${test_file} > ${output_file}
+    diff -Bw ${expected_file} ${output_file} > ${diff_file}
+    echo
+    if [ -s ${diff_file} ]; then
+        echo "${name}: Output does not match expected:"
+        echo "--------------------------------------------------------"
+        cat ${diff_file}
+    else
+        count=$((count+1))
+        echo "${name}: OK"
+    fi
+    echo "========================================================"
+    rm -f ${output_file}
+    rm -f ${diff_file}
+done
+
+echo
+echo "Passed $count of my tests out of $all"
 echo
 
 rmdir ./output
