@@ -9,8 +9,12 @@ void Parser::syntax_error_general() {
     exit(1);
 }
 
-void Parser::syntax_error_sem(string line_number_new, string token_name, string line_number_orginal) {
-    cout << "Line " + line_number_new + ": " + token_name + " already declared on line " + line_number_orginal << endl;
+void Parser::syntax_error_sem(vector<string> sem_error_str) {
+    for (string curr_str : sem_error_str) {
+        cout << curr_str << endl;
+    }
+
+    exit(1);
 }
 
 void Parser::syntax_error_expr(string token_error) {

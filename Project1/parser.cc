@@ -21,6 +21,9 @@ using namespace std;
 myLexicalAnalyzer lexer_reg;
 LexicalAnalyzer lexer;
 
+// Semantic error list
+vector<string> sem_error_str;
+
 // Operator overload for RegNode Comparision
 static bool operator<(const RegNode& node_1, const RegNode& node_2) {
     return node_1.node_number < node_2.node_number;
@@ -191,16 +194,7 @@ struct REG * Parser::parse_expr() {
             // Link the end of expr1 REG to the new accpet node created
             expr1_reg->accept = accept_node;
 
-            // Check if it is a snytax erorr or Epsilon error
-            Token t_peek = lexer.peek(1);
-            if (t_peek.token_type == HASH || t_peek.token_type == COMMA || t_peek.token_type == RPAREN) {
-                return new_reg;
-            } else {
-                syntax_error_general();
-
-                // Useless code place here just to avoid compiler warning...
-                return NULL;
-            }
+            return new_reg;
         } else {
             syntax_error_expr(current_token_name);
             
@@ -242,7 +236,9 @@ void Parser::parse_token() {
 
                 string line_number_new = to_string(t.line_no);
                 string line_number_orginal = to_string(i->line_number);
-                syntax_error_sem(line_number_new, t.lexeme, line_number_orginal);
+                curr_episilon_error += ("Line " + line_number_new + ": " + t.lexeme + " already declared on line " + line_number_orginal);
+                sem_error_str.push_back(curr_episilon_error);
+                curr_episilon_error = "";
 
                 // Consume the entire token without and then discarding it
                 parse_expr();
@@ -286,9 +282,6 @@ void Parser::parse_token_list() {
         expect(COMMA);
         parse_token_list();
     } else if (t.token_type == HASH) {
-        if (has_sem_error) {
-            exit(1);
-        } 
 
         // End of token list
         return;
@@ -304,9 +297,15 @@ void Parser::parse_tokens_section() {
     // HASH is used to signal end of token 
     expect(HASH);
 
-    // Only if no syntax error then we will do epsilon error check
-    if (has_epsilon_error)
+    // Semantic & Epsilon Check
+    if (has_sem_error) {
+        // Only if no syntax error
+        syntax_error_sem(sem_error_str);
+    } else if (has_epsilon_error) {
+        // Only if no syntax error nor semantic error then
+        // we will do epsilon error check
         syntax_error_epsilon(curr_episilon_error);
+    }
 }
 
 /**

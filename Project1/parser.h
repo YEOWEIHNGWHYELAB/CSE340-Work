@@ -23,7 +23,7 @@ class Parser {
     void syntax_error_general();
     void syntax_error_expr(string);
     void syntax_error_epsilon(string);
-    void syntax_error_sem(string, string, string);
+    void syntax_error_sem(vector<string>);
     
   private:
     Token expect(TokenType expected_type);
