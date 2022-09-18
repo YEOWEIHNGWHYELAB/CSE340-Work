@@ -338,11 +338,17 @@ void Parser::parse_input() {
     // There may or may not be white spaces at the leading and 
     // trailing edges of input text excluding quotation marks  
     if (input_text_without_quote.at(0) == WHITE_SPACE) {
-        formatted_input_str = input_text_without_quote.substr(1, input_text_without_quote.size());
+        formatted_input_str = input_text_without_quote.substr(1, input_text_without_quote.size() - 1);
+    } else {
+        formatted_input_str = input_text_without_quote.substr(0, input_text_without_quote.size() - 1);
     }
+
     if (input_text_without_quote.at(input_text_without_quote.size() - 1) == WHITE_SPACE) {
         formatted_input_str = formatted_input_str.substr(0, input_text_without_quote.size() - 1);
     }
+
+    // cout << "Raw String: ->" + input_token.lexeme + "<-"<< endl;
+    // cout << "Input String: ->" + formatted_input_str + "<-"<< endl;
 
     // Parse input string
     lexer_reg.setCurrentInputString(formatted_input_str);
