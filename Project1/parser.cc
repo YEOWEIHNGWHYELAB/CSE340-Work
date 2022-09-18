@@ -42,6 +42,13 @@ Token Parser::expect(TokenType expected_type) {
     return t;
 }
 
+Token Parser::expect_expr(string token_str, TokenType expected_type) {
+    Token t = lexer.GetToken();
+    if (t.token_type != expected_type)
+        syntax_error_expr(token_str);
+    return t;
+}
+
 /**
  * Parses a regular expression and returns the REG of the regular expression that is parsed
  */
@@ -101,7 +108,7 @@ struct REG * Parser::parse_expr() {
 
         // Recursively call parse_expr() for any expression
         REG * expr1_reg = parse_expr();
-        expect(RPAREN);
+        expect_expr(current_token_name, RPAREN);
 
         Token after_RPAREN = lexer.GetToken();
 
@@ -111,9 +118,9 @@ struct REG * Parser::parse_expr() {
              * 
              * And we will recursively call parse_expr() whenever theres expression
              */
-            expect(LPAREN);
+            expect_expr(current_token_name, LPAREN);
             REG * expr2_reg = parse_expr();
-            expect(RPAREN);
+            expect_expr(current_token_name, RPAREN);
 
             if (after_RPAREN.token_type == OR){
                 // CASE 3
@@ -347,8 +354,8 @@ void Parser::parse_input() {
         formatted_input_str = formatted_input_str.substr(0, input_text_without_quote.size() - 1);
     }
 
-    // cout << "Raw String: ->" + input_token.lexeme + "<-"<< endl;
-    // cout << "Input String: ->" + formatted_input_str + "<-"<< endl;
+    // cout << "Raw String: ->" + input_token.lexeme + "<-" << endl;
+    // cout << "Input String: ->" + formatted_input_str + "<-" << endl;
 
     // Parse input string
     lexer_reg.setCurrentInputString(formatted_input_str);

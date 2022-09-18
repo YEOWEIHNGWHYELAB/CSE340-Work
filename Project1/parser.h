@@ -27,6 +27,7 @@ class Parser {
     
   private:
     Token expect(TokenType expected_type);
+    Token expect_expr(string token_str, TokenType expected_type);
 
     struct REG * parse_expr();
     void parse_token();
