@@ -21,7 +21,7 @@ using namespace std;
 myLexicalAnalyzer lexer_reg;
 LexicalAnalyzer lexer;
 
-// Semantic error list
+// Global semantic error list
 vector<string> sem_error_str;
 
 // Operator overload for RegNode Comparision
@@ -285,24 +285,24 @@ void Parser::parse_token_list() {
     parse_token();
     Token t = lexer.peek(1);
 
-    if (t.token_type == COMMA) {        
+    if (t.token_type == COMMA) {
+        // Still has token leftover in the list       
         expect(COMMA);
         parse_token_list();
     } else if (t.token_type == HASH) {
-
-        // End of token list
-        return;
+        // HASH is used to signal end of token list
+        expect(HASH);
     } else {
         syntax_error_general();
     }
 }
 
+/**
+ * Calls parse_token_list() to consume up to the HASH
+ */
 void Parser::parse_tokens_section() {
     // Will call parse token list to store the token list
     parse_token_list();
-
-    // HASH is used to signal end of token 
-    expect(HASH);
 
     // Semantic & Epsilon Check
     if (has_sem_error) {
@@ -333,6 +333,9 @@ void Parser::parse_input() {
      * that INPUT_TEXT must start with " and end with "
      */
     Token input_token = expect(INPUT_TEXT);
+
+    // Don't forget to expect EOF!
+    expect(END_OF_FILE);
 
     int input_text_len = input_token.lexeme.size();
 

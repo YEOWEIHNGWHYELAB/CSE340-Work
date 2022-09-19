@@ -42,7 +42,7 @@ const vector<TOKEN_REG> &myLexicalAnalyzer::getTokensList() const {
 }
 
 // Split string by delimiter
-vector<string> myLexicalAnalyzer::split(string str, char delimiter) {
+vector<string> myLexicalAnalyzer::split_delim(string str, char delimiter) {
     vector<string> string_list;
     string curr_str = "";
     stringstream strstream(str); // Turn the string into a stream.
@@ -95,8 +95,8 @@ bool myLexicalAnalyzer::compare_set(set<RegNode> set_1, set<RegNode> set_2) {
         k += 1;
     }
 
-    sort(s1, s1 + set_1_size);
-    sort(s2, s2 + set_2_size);
+    // No need to sort the 2 list since set data 
+    // structure in C++ is ordered
 
     for (int ii = 0; ii < set_1_size; ii++) {
         if (s1[ii] != s2[ii]) {
@@ -225,7 +225,7 @@ int myLexicalAnalyzer::match(REG * reg, string str, int pos) {
 }
 
 void myLexicalAnalyzer::my_GetToken(){
-    vector<string> input_string_list = split(input_string, ' ');
+    vector<string> input_string_list = split_delim(input_string, ' ');
     string current_token_name = "";
 
     // Go through the list of input string separated by " "
@@ -250,8 +250,7 @@ void myLexicalAnalyzer::my_GetToken(){
             }
 
             if (longest_prefix_string_len == 0) {
-                cout << "ERROR" << endl;
-                exit(1);
+                Parser::syntax_error_input();
             }
 
             cout << current_token_name << " , " + esc_quote + input_string_list[current_string_index].substr(string_start_index, longest_prefix_string_len) + esc_quote << endl;

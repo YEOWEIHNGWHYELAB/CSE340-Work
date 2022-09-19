@@ -26,3 +26,8 @@ void Parser::syntax_error_epsilon(string token_error) {
     cout << "EPSILON IS NOOOOOOOT A TOKEN !!!" + token_error << endl;
     exit(1);
 }
+
+void Parser::syntax_error_input() {
+    cout << "ERROR" << endl;
+    exit(1);
+}

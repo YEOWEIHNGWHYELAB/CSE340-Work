@@ -57,7 +57,7 @@ class myLexicalAnalyzer {
     set<RegNode> match_one_char(set<RegNode> S, char c);
 
     // Split string (by delimiter) and get tokenlist
-    vector<string> split(string str, char delimit);
+    vector<string> split_delim(string str, char delimit);
     const vector<TOKEN_REG> &getTokensList() const;
 
     // Check if a node is in the given set S

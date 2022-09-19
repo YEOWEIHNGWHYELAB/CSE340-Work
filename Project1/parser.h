@@ -21,6 +21,7 @@ class Parser {
     void parse_input();
     void readAndPrintAllInput();
     void syntax_error_general();
+    void static syntax_error_input();
     void syntax_error_expr(string);
     void syntax_error_epsilon(string);
     void syntax_error_sem(vector<string>);
