@@ -1,23 +1,33 @@
 #!/bin/bash
 
-if g++ -std=c++11 -Wall parser.cc syntaxerror.cc lexer.cc mylexer.cc inputbuf.cc; then
-	echo "----------------------";
-	echo "Successfully Compiled!";
-else
-	echo "----------------------";
-	echo "Compilation Failed!";
-	
-	read -p "Do you want to continue test with previous a.out? Y/N " -n 1 -r;
-	if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-		echo; # move to a new line
-		echo;
-		echo "TEST TERMINATED!";
-		exit 1;
-	fi;
+read -p "Do you want to compile? Y/N " -n 1 -r;
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+	echo;
+	echo;
+	echo "Compilation Initialized!";
 
+	if g++ -std=c++11 -Wall parser.cc syntaxerror.cc lexer.cc mylexer.cc inputbuf.cc; then
+		echo "----------------------";
+		echo "Successfully Compiled!";
+	else
+		echo "----------------------";
+		echo "Compilation Failed!";
+		
+		read -p "Do you want to continue test with previous a.out? Y/N " -n 1 -r;
+		if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+			echo; # move to a new line
+			echo;
+			echo "TEST TERMINATED!";
+			exit 1;
+		fi;
+
+		echo;
+		echo;
+		echo "Resuming Test with old a.out...";
+	fi;
+else
 	echo;
 	echo;
-	echo "Resuming Test with old a.out...";
 fi;
 
 TEST_FOLDER="./provided_tests"
@@ -123,38 +133,46 @@ echo
 
 rmdir ./output
 
-echo "========================================================"
-echo "Start of My Test"
+read -p "Do you want use your own test cases? Y/N " -n 1 -r;
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+	echo "========================================================"
+	echo "Start of My Test"
 
-let count=0
-let all=0
+	let count=0
+	let all=0
 
-mkdir -p ./output
+	mkdir -p ./output
 
-for test_file in $(find ./my_tests -type f -name "*.txt" | sort); do
-    all=$((all+1))
-    name=`basename ${test_file} .txt`
-    expected_file=${test_file}.expected
-    output_file=./output/${name}.output
-    diff_file=./output/${name}.diff
-    ./a.out < ${test_file} > ${output_file}
-    diff -Bw ${expected_file} ${output_file} > ${diff_file}
-    echo
-    if [ -s ${diff_file} ]; then
-        echo "${name}: Output does not match expected:"
-        echo "--------------------------------------------------------"
-        cat ${diff_file}
-    else
-        count=$((count+1))
-        echo "${name}: OK"
-    fi
-    echo "========================================================"
-    rm -f ${output_file}
-    rm -f ${diff_file}
-done
+	for test_file in $(find ./my_tests -type f -name "*.txt" | sort); do
+		all=$((all+1))
+		name=`basename ${test_file} .txt`
+		expected_file=${test_file}.expected
+		output_file=./output/${name}.output
+		diff_file=./output/${name}.diff
+		./a.out < ${test_file} > ${output_file}
+		diff -Bw ${expected_file} ${output_file} > ${diff_file}
+		echo
+		if [ -s ${diff_file} ]; then
+			echo "${name}: Output does not match expected:"
+			echo "--------------------------------------------------------"
+			cat ${diff_file}
+		else
+			count=$((count+1))
+			echo "${name}: OK"
+		fi
+		echo "========================================================"
+		rm -f ${output_file}
+		rm -f ${diff_file}
+	done
 
-echo
-echo "Passed $count of my tests out of $all"
-echo
+	echo
+	echo "Passed $count of my tests out of $all"
+	echo
 
-rmdir ./output
+	rmdir ./output
+
+else
+	echo
+	echo
+
+fi

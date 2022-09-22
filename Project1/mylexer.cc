@@ -27,8 +27,8 @@ void myLexicalAnalyzer::setCurrentNodeNumber(int count) {
 }
 
 // Set the INPUT_TEXT given from the standard IO
-void myLexicalAnalyzer::setCurrentInputString(const string &input_string) {
-    myLexicalAnalyzer::input_string = input_string;
+void myLexicalAnalyzer::setCurrentInputString(const string &input_text) {
+    myLexicalAnalyzer::input_text = input_text;
 }
 
 // Add token to the current token list
@@ -42,7 +42,7 @@ const vector<TOKEN_REG> &myLexicalAnalyzer::getTokensList() const {
 }
 
 // Split string by delimiter
-vector<string> myLexicalAnalyzer::split_delim(string str, char delimiter) {
+vector<string> myLexicalAnalyzer::splitDelim(string str, char delimiter) {
     vector<string> string_list;
     string curr_str = "";
     stringstream strstream(str); // Turn the string into a stream.
@@ -69,7 +69,7 @@ bool myLexicalAnalyzer::isNodeInSetS(set<RegNode> curr_set, RegNode * reg_node){
 // Go thorugh the set and insert each element of each set 
 // into 2 separate array and do comparison to check if each
 // element is equal when ordered / sorted  
-bool myLexicalAnalyzer::compare_set(set<RegNode> set_1, set<RegNode> set_2) {
+bool myLexicalAnalyzer::compareSet(set<RegNode> set_1, set<RegNode> set_2) {
     // Trivial
     if (set_1.size() != set_2.size()) {
         return false;
@@ -113,7 +113,9 @@ static bool operator<(const RegNode& node_1, const RegNode& node_2) {
 }
 
 /**
- * current_reachable_node_set correspons to set S
+ * Returns the set of reachable nodes after consuming consuming c
+ * 
+ * current_reachable_node_set corresponds to set S
  */
 set<RegNode> myLexicalAnalyzer::match_one_char(set<RegNode> current_reachable_node_set, char c) {
     set<RegNode> nodes_reachable_consuming_c; // Set S'
@@ -175,7 +177,7 @@ set<RegNode> myLexicalAnalyzer::match_one_char(set<RegNode> current_reachable_no
         }
 
         // Check if the set has changed (more nodes reachable while consuming '_')
-        if (!compare_set(nodes_reachable_consuming_c, node_reachable)) {
+        if (!compareSet(nodes_reachable_consuming_c, node_reachable)) {
             changed = true;
             nodes_reachable_consuming_c.insert(node_reachable.begin(), node_reachable.end()); // Duplicate nodes are discarded
             node_reachable.clear();
@@ -192,6 +194,11 @@ set<RegNode> myLexicalAnalyzer::match_one_char(set<RegNode> current_reachable_no
     return nodes_reachable_consuming_c;
 }
 
+/**
+ * match(r,s,p) is called for every REG r in the list starting from the 
+ * current position p and it returns the longest prefix match for that 
+ * INPUT_TEXT part with the given REG
+ */
 int myLexicalAnalyzer::match(REG * reg, string str, int pos) {
     int current_input_match_len = 0;
     int longest_possible_lexeme = 0;
@@ -213,7 +220,7 @@ int myLexicalAnalyzer::match(REG * reg, string str, int pos) {
         current_reachable_node_set = match_one_char(current_reachable_node_set, *input_string_iterator);
         current_input_match_len += 1;
         
-        // Find you can reach the accept node, then you can match successfully!
+        // Find if you can reach the accept node, then you can match successfully!
         // And because set find will return the end of node if the accept node 
         // is not found so we check if it is at the end node of the set. 
         if (current_reachable_node_set.find(*reg->accept) != current_reachable_node_set.end()) {
@@ -224,8 +231,13 @@ int myLexicalAnalyzer::match(REG * reg, string str, int pos) {
     return longest_possible_lexeme;
 }
 
+/**
+ * Prints the token with the longest matching prefix match together with its 
+ * lexeme and updates the value of the current position p
+ */
 void myLexicalAnalyzer::my_GetToken(){
-    vector<string> input_string_list = split_delim(input_string, ' ');
+    // Split the string into vector of strings based on the white space delimiter
+    vector<string> input_string_list = splitDelim(input_text, WHITE_SPACE);
     string current_token_name = "";
 
     // Go through the list of input string separated by " "

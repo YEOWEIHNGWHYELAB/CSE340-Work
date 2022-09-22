@@ -15,8 +15,6 @@
 
 using namespace std;
 
-#define WHITE_SPACE ' '
-
 // Global LexicalAnalyzer & myLexicalAnalyzer object
 myLexicalAnalyzer lexer_reg;
 LexicalAnalyzer lexer;
@@ -50,7 +48,8 @@ Token Parser::expect_expr(string token_str, TokenType expected_type) {
 }
 
 /**
- * Parses a regular expression and returns the REG of the regular expression that is parsed
+ * Parses a regular expression and returns the REG of the regular 
+ * expression that is parsed
  */
 struct REG * Parser::parse_expr() {
     /**
@@ -65,7 +64,7 @@ struct REG * Parser::parse_expr() {
     // care of at parse_token_list
     curr_t = lexer.GetToken(); // Consume token
 
-    if (curr_t.token_type == CHAR || curr_t.token_type == UNDERSCORE){
+    if (curr_t.token_type == CHAR || curr_t.token_type == UNDERSCORE) {
         /**
          * Single Character Or it could be Just Epsilon Only 
          * 1 Start and 1 Accept Node (Final)
@@ -112,7 +111,7 @@ struct REG * Parser::parse_expr() {
 
         Token after_RPAREN = lexer.GetToken();
 
-        if (after_RPAREN.token_type == DOT || after_RPAREN.token_type == OR){
+        if (after_RPAREN.token_type == DOT || after_RPAREN.token_type == OR) {
             /**
              * For CASE 2 & 3
              * 
@@ -122,7 +121,7 @@ struct REG * Parser::parse_expr() {
             REG * expr2_reg = parse_expr();
             expect_expr(current_token_name, RPAREN);
 
-            if (after_RPAREN.token_type == OR){
+            if (after_RPAREN.token_type == OR) {
                 // CASE 3
 
                 // New REG form by combining the existing expr1_reg and expr2_reg
@@ -156,7 +155,7 @@ struct REG * Parser::parse_expr() {
                 accept_node->node_number = lexer_reg.getCurrentNodeNumber();
 
                 return new_reg;
-            } else{
+            } else if (after_RPAREN.token_type == DOT) {
                 // CASE 2
 
                 // New REG to combine the expr1 REG and expr2 REG
@@ -169,6 +168,11 @@ struct REG * Parser::parse_expr() {
                 expr1_reg->accept->first_label = '_';
 
                 return new_reg;
+            } else {
+                syntax_error_expr(current_token_name);
+
+                // Useless code place here just to avoid compiler warning...
+                return NULL;
             }
         } else if (after_RPAREN.token_type == STAR) {
             /**
@@ -279,7 +283,7 @@ void Parser::parse_token() {
 }
 
 /**
- * Will recursively call parse_token_list until we run out of token
+ * Recursively call parse_token_list() until we run out of token
  */
 void Parser::parse_token_list() {
     parse_token();
@@ -298,7 +302,9 @@ void Parser::parse_token_list() {
 }
 
 /**
- * Calls parse_token_list() to consume up to the HASH
+ * Calls parse_token_list() to consume up all tokens given up 
+ * to the end (HASH), then check if theres semantic errors or
+ * epsilon errors
  */
 void Parser::parse_tokens_section() {
     // Will call parse token list to store the token list
@@ -316,7 +322,7 @@ void Parser::parse_tokens_section() {
 }
 
 /**
- * Will handle the input from the buffer
+ * Calls parse_token_section() and then handle the input from the buffer
  */ 
 void Parser::parse_input() {
     /**

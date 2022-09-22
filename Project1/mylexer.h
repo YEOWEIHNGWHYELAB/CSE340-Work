@@ -57,20 +57,20 @@ class myLexicalAnalyzer {
     set<RegNode> match_one_char(set<RegNode> S, char c);
 
     // Split string (by delimiter) and get tokenlist
-    vector<string> split_delim(string str, char delimit);
+    vector<string> splitDelim(string str, char delimit);
     const vector<TOKEN_REG> &getTokensList() const;
 
     // Check if a node is in the given set S
     bool isNodeInSetS(set<RegNode> S, RegNode * r);
 
     // Check if 2 sets are equal
-    bool compare_set(set<RegNode> S1, set<RegNode> S2);
+    bool compareSet(set<RegNode> S1, set<RegNode> S2);
 
     // Escape quote
     string esc_quote = "\"";
 
     // Input String Setter and Token List Adder
-    void setCurrentInputString(const string &input_string);
+    void setCurrentInputString(const string &input_text);
     void addTokenToTokenList(const TOKEN_REG &token_reg);
 
     // Node's numbering
@@ -79,7 +79,7 @@ class myLexicalAnalyzer {
 
   private:
       vector<TOKEN_REG> tokens_list;
-      string input_string;
+      string input_text;
       static int node_number;
 };
 

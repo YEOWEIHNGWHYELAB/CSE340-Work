@@ -11,6 +11,8 @@
 #include "lexer.h"
 #include "mylexer.h"
 
+#define WHITE_SPACE ' '
+
 class Parser {
   public:
     bool has_sem_error = false;
