@@ -221,7 +221,7 @@ struct REG * Parser::parse_expr() {
 }
 
 /**
- * Consume token
+ * Consume token by calling parse_token
  */ 
 void Parser::parse_token() {
     // Constructing TOKEN REG (REG + lexeme (name of token))
@@ -295,7 +295,6 @@ void Parser::parse_token_list() {
         parse_token_list();
     } else if (t.token_type == HASH) {
         // HASH is used to signal end of token list
-        expect(HASH);
     } else {
         syntax_error_general();
     }
@@ -309,16 +308,7 @@ void Parser::parse_token_list() {
 void Parser::parse_tokens_section() {
     // Will call parse token list to store the token list
     parse_token_list();
-
-    // Semantic & Epsilon Check
-    if (has_sem_error) {
-        // Only if no syntax error
-        syntax_error_sem(sem_error_str);
-    } else if (has_epsilon_error) {
-        // Only if no syntax error nor semantic error then
-        // we will do epsilon error check
-        syntax_error_epsilon(curr_episilon_error);
-    }
+    expect(HASH);
 }
 
 /**
@@ -342,6 +332,16 @@ void Parser::parse_input() {
 
     // Don't forget to expect EOF!
     expect(END_OF_FILE);
+
+    // Semantic & Epsilon Check
+    if (has_sem_error) {
+        // Only if no syntax error
+        syntax_error_sem(sem_error_str);
+    } else if (has_epsilon_error) {
+        // Only if no syntax error nor semantic error then
+        // we will do epsilon error check
+        syntax_error_epsilon(curr_episilon_error);
+    }
 
     int input_text_len = input_token.lexeme.size();
 
