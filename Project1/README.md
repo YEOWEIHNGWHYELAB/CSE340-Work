@@ -8,8 +8,6 @@
 
 ## Problems Left
 
-1) Last test case for syntax error general failing.
+1) Last test case for syntax error general failing
 
-Possibilities:
-- The definition of WHITE_SPACE is incorrect when it comes to parsing your INPUT_TEXT
-- At the my_GetToken() method, you are not throwing errors properly
+Because you check for semantic error and epsilon error before expect(INPUT_TEXT) and expect(EOF)
