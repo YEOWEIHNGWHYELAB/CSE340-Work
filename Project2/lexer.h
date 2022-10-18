@@ -13,11 +13,27 @@
 
 // ------- token types -------------------
 
-typedef enum { END_OF_FILE = 0,
-    SCALAR, ARRAY, OUTPUT, PLUS, MINUS, DIV, MULT,
-    EQUAL, SEMICOLON,
-    LBRAC, RBRAC, LPAREN, RPAREN, LBRACE, RBRACE,
-    DOT, NUM, ID, ERROR
+typedef enum { 
+  END_OF_FILE = 0,
+  SCALAR, 
+  ARRAY, 
+  OUTPUT, 
+  PLUS, 
+  MINUS, 
+  DIV, 
+  MULT,
+  EQUAL, 
+  SEMICOLON,
+  LBRAC, 
+  RBRAC, 
+  LPAREN, 
+  RPAREN, 
+  LBRACE, 
+  RBRACE,
+  DOT, 
+  NUM, 
+  ID, 
+  ERROR
 } TokenType;
 
 class Token {

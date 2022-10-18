@@ -7,7 +7,7 @@ const int MEMSIZE = 10000;
 using namespace std;
 
 enum AddrType {IMMEDIATE=0, DIRECT, INDIRECT, NOAT, NA};
-enum OpType {OP_NOOP=0, OP_PLUS, OP_MINUS, OP_MULT, OP_DIV,OP_NOOPT};
+enum OpType {OP_NOOP=0, OP_PLUS, OP_MINUS, OP_MULT, OP_DIV, OP_NOOPT};
 enum InstType {OUTPUT_INST=0, ASSIGN_INST, CJMP_INST, NOIT};
 
 struct instNode {

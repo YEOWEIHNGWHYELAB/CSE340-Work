@@ -1,31 +1,157 @@
 #include <iostream>
+#include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include "lexer.h"
 #include "execute.h"
 #include "tasks.h"
+#include "error.h"
 
 using namespace std;
 
+int precedence_table[12][12] = {
+    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_LESS, PREC_ERR, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_EQUAL, PREC_LESS, PREC_LESS, PREC_ERR},
+    {PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_EQUAL, PREC_ERR, PREC_ERR, PREC_ERR},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR, PREC_LESS, PREC_ERR, PREC_ERR, PREC_LESS, PREC_LESS, PREC_ACCEPT},
+};
+
+LexicalAnalyzer lexer;
+vector<stackNode> stack;
+
+// Returns a END_OF_EXPRESSION Token
+Token eoe_token(int line_num) {
+    Token *eoe_token = new Token();
+    eoe_token->lexeme = "$";
+    eoe_token->line_no = line_num;
+    eoe_token->token_type = END_OF_FILE;
+
+    return *eoe_token;
+}
+
+Token expect(TokenType expected_type) {
+    Token curr_token = lexer.GetToken();
+
+    if (curr_token.token_type != expected_type)
+        syntax_error();
+
+    return curr_token;
+}
+
+Token get_symbol() {
+    return lexer.GetToken();
+}
+
+Token peek_symbol() {
+    Token next_token_t1 = lexer.peek(1);
+
+    // 3 cases of EOE
+    // If the next token is SEMICOLON
+    // If the next token is RBRAC and the token after that is EQUAL
+    // If the next token is RBRAC and the token after that is SEMICOLON
+    if (next_token_t1.token_type == SEMICOLON) {
+        return eoe_token(next_token_t1.line_no);
+    } else if (next_token_t1.token_type == RBRAC) {
+        Token next_token_t2 = lexer.peek(2);
+
+        if (next_token_t2.token_type == EQUAL || next_token_t2.token_type == SEMICOLON) {
+            return eoe_token(next_token_t1.line_no);
+        }
+    }
+
+    // Otherwise return next symbol
+    return next_token_t1;
+}
+
+/**
+ * Stack operations
+ * 
+ * 1) Peek at the terminal closest to the top this is either the top of 
+ * the stack or just below the top of the stack
+ * 2) Shift a token on the stack
+ * 3) Reduce This one is more involved. There are two parts to this:
+ *      1. You should write a function that pops elements from the stack 
+ *      until the top of stack has a terminal that is <. the last popped 
+ *      terminal
+ *      2. Check if the popped elements match the RHS of one of the rules
+ *      3. Build the abstract syntax tree after the reduction
+*/
+stackNode parse_expr() {
+    // Peek the top of stack
+    vector<stackNode>::iterator stack_peeker = stack.end();
+
+    if (stack_peeker->type == TERM) {
+        // return *stack_peeker;
+    } else {
+        // Go back one entry 
+        stack_peeker -= 1;
+
+        // Check if the element below the top of the stack is stack
+        if (stack_peeker->type == TERM) {
+            // return *stack_peeker;
+        } else {
+            syntax_error();
+        }
+    }
+
+}
+
 void parse_assign_stmt() {
+    expect(ID);
+    Token t1 = lexer.peek(1);
+    Token t2 = lexer.peek(2);
+
+    cout << t1.lexeme << endl;
+    cout << t2.lexeme << endl;
+    
+    if (t1.token_type == LBRAC && t2.token_type == DOT) {
+        // array access with .
+        expect(LBRAC);
+        expect(DOT);
+        expect(RBRAC);
+    } else if (t1.token_type == LBRAC) {
+        // array access but not .
+        expect(LBRAC);
+        parse_expr();
+        expect(RBRAC);
+    }
+
+    // at this point we have parsed the [.] or [expr]
+    // or we are dealing with the case ID =
+    // in all cases, the next token must be EQUAL
+    expect(EQUAL);
+    parse_expr();
+    expect(SEMICOLON);
+}
+
+void parse_scalar() {
+
+}
+
+void parse_array() {
     
 }
 
 // Task 1
-void parse_and_generate_AST()
-{
-	cout << "1" << endl;
+void parse_and_generate_AST() {
+    parse_assign_stmt();
 }
 
 // Task 2
-void parse_and_type_check()
-{
+void parse_and_type_check() {
 	cout << "2" << endl;
 }
 
 // Task 3
-instNode* parse_and_generate_statement_list()
-{
+instNode* parse_and_generate_statement_list() {
     cout << "3" << endl;
 
     // The following is the hardcoded statement list 
@@ -85,7 +211,6 @@ instNode* parse_and_generate_statement_list()
 
     i02->next = i03;
 
-
     instNode * i1 = new instNode();
     i1->lhsat=DIRECT; i1->lhs = 34; // t1
     i1->iType=ASSIGN_INST;          // =
@@ -111,7 +236,6 @@ instNode* parse_and_generate_statement_list()
     i3->oper = OP_MULT;             // *
     i3->op2at=DIRECT; i3->op2 = 35;  // t2
 
-
     i2->next = i3;                  // i3 should be after i1 and i2
 
     instNode * i4 = new instNode();
@@ -119,7 +243,6 @@ instNode* parse_and_generate_statement_list()
     i4->iType=ASSIGN_INST;          // =
     i4->op1at=DIRECT; i4->op1 = 36; // t3
     i4->oper = OP_NOOP;             // no operator
-
 
     i3->next = i4;
 
@@ -172,7 +295,6 @@ instNode* parse_and_generate_statement_list()
                                          // t6
 
     i9->next = i10;
-
 
     instNode* code = i01;
 

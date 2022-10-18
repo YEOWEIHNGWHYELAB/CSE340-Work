@@ -14,24 +14,38 @@
 
 using namespace std;
 
-string reserved[] = { "END_OF_FILE",
-    "SCALAR", "ARRAY", "OUTPUT", "PLUS", "MINUS", "DIV", "MULT",
-    "EQUAL", "SEMICOLON",
-    "LBRAC", "RBRAC", "LPAREN", "RPAREN", "LBRACE", "RBRACE",
-    "DOT", "NUM", "ID", "ERROR"
+string reserved[] = { 
+    "END_OF_FILE",
+    "SCALAR", 
+    "ARRAY", 
+    "OUTPUT", 
+    "PLUS", 
+    "MINUS", 
+    "DIV", 
+    "MULT",
+    "EQUAL", 
+    "SEMICOLON",
+    "LBRAC", 
+    "RBRAC", 
+    "LPAREN", 
+    "RPAREN", 
+    "LBRACE", 
+    "RBRACE",
+    "DOT", 
+    "NUM", 
+    "ID", 
+    "ERROR"
 };
 
 #define KEYWORDS_COUNT 3
 
-void Token::Print()
-{
+void Token::Print() {
     cout << "{" << this->lexeme << " , "
          << reserved[(int) this->token_type] << " , "
          << this->line_no << "}\n";
 }
 
-LexicalAnalyzer::LexicalAnalyzer()
-{
+LexicalAnalyzer::LexicalAnalyzer() {
     this->line_no = 1;
     tmp.lexeme = "";
     tmp.line_no = 1;
@@ -48,8 +62,7 @@ LexicalAnalyzer::LexicalAnalyzer()
     // pushes END_OF_FILE is not pushed on the token list
 }
 
-bool LexicalAnalyzer::SkipSpace()
-{
+bool LexicalAnalyzer::SkipSpace() {
     char c;
     bool space_encountered = false;
 
@@ -68,8 +81,7 @@ bool LexicalAnalyzer::SkipSpace()
     return space_encountered;
 }
 
-int LexicalAnalyzer::FindKeywordIndex(string s)
-{
+int LexicalAnalyzer::FindKeywordIndex(string s) {
     string keyword[] = {"SCALAR", "ARRAY", "OUTPUT"};
     for (int i = 0; i < KEYWORDS_COUNT; i++) {
         if (s == keyword[i]) {
@@ -79,8 +91,7 @@ int LexicalAnalyzer::FindKeywordIndex(string s)
     return -1;
 }
 
-Token LexicalAnalyzer::ScanNumber()
-{
+Token LexicalAnalyzer::ScanNumber() {
     char c;
 
     input.GetChar(c);
@@ -111,8 +122,7 @@ Token LexicalAnalyzer::ScanNumber()
     }
 }
 
-Token LexicalAnalyzer::ScanIdOrKeyword()
-{
+Token LexicalAnalyzer::ScanIdOrKeyword() {
     char c;
     input.GetChar(c);
 
@@ -143,18 +153,18 @@ Token LexicalAnalyzer::ScanIdOrKeyword()
 
 // GetToken() accesses tokens from the tokenList that is populated when a 
 // lexer object is instantiated
-Token LexicalAnalyzer::GetToken()
-{
+Token LexicalAnalyzer::GetToken() {
     Token token;
+
     if (index == static_cast<int>(tokenList.size())){       // return end of file if
         token.lexeme = "";                // index is too large
         token.line_no = line_no;
         token.token_type = END_OF_FILE;
-    }
-    else{
+    } else {
         token = tokenList[index];
         index = index + 1;
     }
+
     return token;
 }
 
@@ -169,8 +179,7 @@ Token LexicalAnalyzer::GetToken()
 //
 // NOTE 2: UngetToken() will not be needed if you use GetToken() and peek() 
 // judiciously
-void LexicalAnalyzer::UngetToken(int howMany)
-{
+void LexicalAnalyzer::UngetToken(int howMany) {
     if (howMany <= 0)
     {
         cout << "LexicalAnalyzer:UngetToken:Error: non positive argument\n";
@@ -186,8 +195,7 @@ void LexicalAnalyzer::UngetToken(int howMany)
 }
 
 // peek requires that the argument "howFar" be positive.
-Token LexicalAnalyzer::peek(int howFar)
-{
+Token LexicalAnalyzer::peek(int howFar) {
     if (howFar <= 0) {      // peeking backward or in place is not allowed
         cout << "LexicalAnalyzer:peek:Error: non positive argument\n";
         exit(-1);
@@ -204,8 +212,7 @@ Token LexicalAnalyzer::peek(int howFar)
         return tokenList[peekIndex];
 }
 
-Token LexicalAnalyzer::GetTokenMain()
-{
+Token LexicalAnalyzer::GetTokenMain() {
     char c;
 
     SkipSpace();
