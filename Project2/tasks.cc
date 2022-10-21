@@ -27,6 +27,9 @@ int precedence_table[12][12] = {
 LexicalAnalyzer lexer;
 vector<stackNode> stack;
 
+vector<Token> scalar_list;
+vector<Token> array_list;
+
 // Returns a END_OF_EXPRESSION Token
 Token eoe_token(int line_num) {
     Token *eoe_token = new Token();
@@ -132,17 +135,41 @@ void parse_assign_stmt() {
     expect(SEMICOLON);
 }
 
-void parse_scalar() {
+void parse_braces() {
+    expect(LBRACE);
+    parse_assign_stmt();
+    expect(RBRACE);
+}
 
+void parse_scalar() {
+    expect(SCALAR);
+
+    while (lexer.peek(1).token_type != ARRAY) {
+        Token curr_var = expect(ID);
+        scalar_list.push_back(curr_var);
+    }
 }
 
 void parse_array() {
-    
+    expect(ARRAY);
+
+    while (lexer.peek(1).token_type != LBRACE) {
+        Token curr_var = expect(ID);
+        scalar_list.push_back(curr_var);
+    }
 }
 
 // Task 1
 void parse_and_generate_AST() {
-    parse_assign_stmt();
+    // SCALAR and ARRAY Declaration Parsing
+    parse_scalar();
+    parse_array();
+
+    // Statement Parsing
+    parse_braces();
+
+    // End of statement parsing
+    expect(END_OF_FILE);
 }
 
 // Task 2

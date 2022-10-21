@@ -79,6 +79,7 @@ struct exprNode {
 
 stackNode parse_expr();
 void parse_assign_stmt();
+void parse_braces();
 void parse_scalar();
 void parse_array();
 
