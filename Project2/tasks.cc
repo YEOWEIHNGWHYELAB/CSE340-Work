@@ -9,21 +9,6 @@
 
 using namespace std;
 
-int precedence_table[12][12] = {
-    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_LESS, PREC_ERR, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_EQUAL, PREC_LESS, PREC_LESS, PREC_ERR},
-    {PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_EQUAL, PREC_ERR, PREC_ERR, PREC_ERR},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR, PREC_LESS, PREC_ERR, PREC_ERR, PREC_LESS, PREC_LESS, PREC_ACCEPT},
-};
-
 LexicalAnalyzer lexer;
 vector<stackNode> stack;
 
@@ -75,6 +60,89 @@ Token peek_symbol() {
 }
 
 /**
+ * Returns the operatorValue of the current symbol
+*/
+operatorValue operator_mapper(Token curr_token) {
+    
+}
+
+/**
+ * Performs operator precedence parsing
+ * 
+ * There are 2 possible action -> Reduce or Shift
+*/
+void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input_token) {
+    /**
+     * curr_stack_term_top is the current term on top or just below top of stack while
+     * curr_input_token is the current input token
+     * 
+     * In the notes, 
+     * a is the token on top or just below of stack
+     * t is the token from input
+     * b is the token type of t 
+    */
+
+    curr_stack_term_top.type
+
+    if (precedence_table[curr_stack_term_top][curr_input_token] == PREC_LESS) || ( table[a][b] == PREC_EQUAL) {
+        // shift
+        t = lexer.getToken();
+        stack.push(t);
+    }
+
+    /*
+    
+     
+    else if (table[a][b] == ‘∙≻’) // reduce
+    {
+    RHS = an empty stack
+    repeat
+    s = stack.pop() // pop terminals and
+    // non-terminals
+    if s is a terminal
+    last_popped_term = s
+    RHS.push(s)
+    until ( ( is_a_terminal(stack.peek() ) and
+    ( table[stack.terminalpeek()][last_popped_term] == `≺∙’ ))
+    if E -> RHS rule exists // RHS calculated above
+    {
+    reduce E -> RHS
+    stack.push( E ) // we can think of E as the
+    // root of subtree for E -> RHS
+    }
+    else
+    syntax_error()l
+    }
+    else
+    syntax_error();
+    
+    */
+}
+
+/**
+ * Returns the stackNode of type terminal closest to the top of stack or
+ * just below top of stack
+*/
+stackNode stack_peeker() {
+    vector<stackNode>::iterator stack_peeker = stack.end();
+
+    if (stack_peeker->type == TERM) {
+        // If the top is a TERM
+        return *stack_peeker;
+    } else {
+        // If top is not a TERM, peek below by one on the stack 
+        stack_peeker -= 1;
+
+        // Check if the element below the top of the stack is stack
+        if (stack_peeker->type == TERM) {
+            return *stack_peeker;
+        } else {
+            syntax_error();
+        }
+    }
+}
+
+/**
  * Stack operations
  * 
  * 1) Peek at the terminal closest to the top this is either the top of 
@@ -87,24 +155,22 @@ Token peek_symbol() {
  *      2. Check if the popped elements match the RHS of one of the rules
  *      3. Build the abstract syntax tree after the reduction
 */
-stackNode parse_expr() {
-    // Peek the top of stack
-    vector<stackNode>::iterator stack_peeker = stack.end();
+exprNode* parse_expr() {
+    // Peek top terminal of stack
+    stackNode curr_stack_term_top = stack_peeker();
 
-    if (stack_peeker->type == TERM) {
-        // return *stack_peeker;
-    } else {
-        // Go back one entry 
-        stack_peeker -= 1;
+    // Peek current input token
+    Token curr_input_token = peek_symbol();
 
-        // Check if the element below the top of the stack is stack
-        if (stack_peeker->type == TERM) {
-            // return *stack_peeker;
-        } else {
-            syntax_error();
-        }
+    // If $ is on top of the stack and lexer.peek() = $
+    while ((curr_input_token.token_type == END_OF_FILE) && (curr_stack_term_top.term->token_type == END_OF_FILE)) {
+        operator_precedence_parsing(curr_stack_term_top, curr_input_token);
+
+        curr_stack_term_top = stack_peeker();
+        curr_input_token = peek_symbol();
     }
 
+    return new exprNode();
 }
 
 void parse_assign_stmt() {
@@ -135,9 +201,14 @@ void parse_assign_stmt() {
     expect(SEMICOLON);
 }
 
-void parse_braces() {
+void parse_block() {
     expect(LBRACE);
-    parse_assign_stmt();
+
+    // Parse Statements 1 statement at a time
+    while (lexer.peek(1).token_type != RBRAC) {
+        parse_assign_stmt();
+    }
+
     expect(RBRACE);
 }
 
@@ -159,6 +230,13 @@ void parse_array() {
     }
 }
 
+/**
+ * Prints the abstract syntax tree using BFS
+*/
+void print_abstract_syntax_tree() {
+
+}
+
 // Task 1
 void parse_and_generate_AST() {
     // SCALAR and ARRAY Declaration Parsing
@@ -166,10 +244,13 @@ void parse_and_generate_AST() {
     parse_array();
 
     // Statement Parsing
-    parse_braces();
+    parse_block();
 
     // End of statement parsing
     expect(END_OF_FILE);
+
+    // Perform BFS printing here (only if every statement has no syntax error)
+    print_abstract_syntax_tree();
 }
 
 // Task 2

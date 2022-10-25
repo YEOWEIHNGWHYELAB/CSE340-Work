@@ -36,6 +36,7 @@ typedef enum {
     TERM
 } snodeType;
 
+// Either expression or a term
 struct stackNode {
     // enum type can be EXPR or TERM
     snodeType type;
@@ -47,6 +48,7 @@ struct stackNode {
     };
 };
 
+// Strictly of type expression
 struct exprNode {
     // enum type: ID_OPER, PLUS_OPER, MINUS__OPER, DIV_OPER
     int curr_operator;
@@ -75,11 +77,50 @@ struct exprNode {
             int line_no;
         } array;
     };
+
+    exprNode() {
+
+    }
 };
 
-stackNode parse_expr();
+// Used to map to operatorValue
+string symbolMap[12] = {
+    "PLUS",
+    "MINUS",
+    "MULT",
+    "DIV",
+    "LPAREN",
+    "RPAREN",
+    "LBRAC",
+    "DOT",
+    "RBRAC",
+    "NUM",
+    "ID",
+    "END_OF_FILE"
+};
+
+int precedence_table[12][12] = {
+    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_LESS, PREC_ERR, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_EQUAL, PREC_LESS, PREC_LESS, PREC_ERR},
+    {PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_EQUAL, PREC_ERR, PREC_ERR, PREC_ERR},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR, PREC_LESS, PREC_ERR, PREC_ERR, PREC_LESS, PREC_LESS, PREC_ACCEPT},
+};
+
+exprNode* parse_expr();
+operatorValue operator_mapper(Token);
+void operator_precedence_parsing(stackNode);
+void print_abstract_syntax_tree();
+stackNode stack_peeker();
 void parse_assign_stmt();
-void parse_braces();
+void parse_block();
 void parse_scalar();
 void parse_array();
 
