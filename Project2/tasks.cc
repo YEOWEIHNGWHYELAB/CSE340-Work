@@ -15,6 +15,22 @@ vector<stackNode> stack;
 vector<Token> scalar_list;
 vector<Token> array_list;
 
+// Initailize the map that maps token type index to the correct index precedence table 
+void initialize_map() {
+    map_tokentype_indextable.insert(pair<int, int>(PLUS, 0));
+    map_tokentype_indextable.insert(pair<int, int>(MINUS, 1));
+    map_tokentype_indextable.insert(pair<int, int>(MULT, 2));
+    map_tokentype_indextable.insert(pair<int, int>(DIV, 3));
+    map_tokentype_indextable.insert(pair<int, int>(LPAREN, 4));
+    map_tokentype_indextable.insert(pair<int, int>(RPAREN, 5));
+    map_tokentype_indextable.insert(pair<int, int>(LBRAC, 6));
+    map_tokentype_indextable.insert(pair<int, int>(DOT, 7));
+    map_tokentype_indextable.insert(pair<int, int>(RBRAC, 8));
+    map_tokentype_indextable.insert(pair<int, int>(NUM, 9));
+    map_tokentype_indextable.insert(pair<int, int>(ID, 10));
+    map_tokentype_indextable.insert(pair<int, int>(END_OF_FILE, 11));
+}
+
 // Returns a END_OF_EXPRESSION Token
 Token eoe_token(int line_num) {
     Token *eoe_token = new Token();
@@ -60,66 +76,6 @@ Token peek_symbol() {
 }
 
 /**
- * Returns the operatorValue of the current symbol
-*/
-operatorValue operator_mapper(Token curr_token) {
-    
-}
-
-/**
- * Performs operator precedence parsing
- * 
- * There are 2 possible action -> Reduce or Shift
-*/
-void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input_token) {
-    /**
-     * curr_stack_term_top is the current term on top or just below top of stack while
-     * curr_input_token is the current input token
-     * 
-     * In the notes, 
-     * a is the token on top or just below of stack
-     * t is the token from input
-     * b is the token type of t 
-    */
-
-    curr_stack_term_top.type
-
-    if (precedence_table[curr_stack_term_top][curr_input_token] == PREC_LESS) || ( table[a][b] == PREC_EQUAL) {
-        // shift
-        t = lexer.getToken();
-        stack.push(t);
-    }
-
-    /*
-    
-     
-    else if (table[a][b] == ‘∙≻’) // reduce
-    {
-    RHS = an empty stack
-    repeat
-    s = stack.pop() // pop terminals and
-    // non-terminals
-    if s is a terminal
-    last_popped_term = s
-    RHS.push(s)
-    until ( ( is_a_terminal(stack.peek() ) and
-    ( table[stack.terminalpeek()][last_popped_term] == `≺∙’ ))
-    if E -> RHS rule exists // RHS calculated above
-    {
-    reduce E -> RHS
-    stack.push( E ) // we can think of E as the
-    // root of subtree for E -> RHS
-    }
-    else
-    syntax_error()l
-    }
-    else
-    syntax_error();
-    
-    */
-}
-
-/**
  * Returns the stackNode of type terminal closest to the top of stack or
  * just below top of stack
 */
@@ -139,6 +95,94 @@ stackNode stack_peeker() {
         } else {
             syntax_error();
         }
+    }
+}
+
+// Peek only the top stackNode of the stack
+stackNode stack_peeker_top() {
+    return *stack.end();
+}
+
+// Duplicate the token
+void duplicate_token(stackNode src, Token dest) {
+    dest.lexeme = src.term->lexeme;
+    dest.line_no = src.term->line_no;
+    dest.token_type = src.term->token_type;
+}
+
+// Check if the current rhs to match is valid
+bool rhs_match(string curr_rhs) {
+
+}
+
+/**
+ * Performs operator precedence parsing
+ * 
+ * There are 2 possible action -> Reduce or Shift
+*/
+void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input_token) {
+    /**
+     * curr_stack_term_top is the current term on top or just below top of stack while
+     * curr_input_token is the current input token
+     * 
+     * In the notes, 
+     * a is the token on top or just below of stack
+     * t is the token from input
+     * b is the token type of t 
+    */
+    int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
+    int b = map_tokentype_indextable[curr_input_token.token_type];
+
+    if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
+        // Shift
+
+        // Get token from input first
+        Token t = get_symbol();
+
+        // Build the stack node from token
+        stackNode t_stack_node;
+        t_stack_node.type = TERM;
+        t_stack_node.term = &t; 
+
+        // Push to stack
+        stack.push_back(t_stack_node);
+    } else if (precedence_table[a][b] == PREC_GREATER) {
+        // Reduce
+        
+        // Stack to store all the stackNode from the current RHS
+        vector<stackNode> curr_rhs;
+
+        // Store the last pop term
+        Token* last_popped_term = new Token();
+
+        // Peek the top of stack
+        stackNode curr_top = stack_peeker_top();
+
+        // Get the first last popped token
+        duplicate_token(curr_top, *last_popped_term);
+        
+        // Pop until the top of the stack is a term and the operator precedence become less than
+        while (curr_top.type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS) {
+            if (curr_top.type == TERM) {
+                last_popped_term = curr_top.term;
+            }
+            
+            curr_rhs.push_back(curr_top);
+            curr_top = stack_peeker_top();
+
+            stack.pop_back();
+        }
+        
+        // RHS calculated above
+        if (E -> RHS rule exists) {
+            // we can think of E as the root of subtree for E -> RHS
+            reduce E -> RHS
+            stack.push_back(E);
+        } else {
+            syntax_error();
+        }
+    } else {
+        syntax_error();
     }
 }
 
@@ -239,6 +283,9 @@ void print_abstract_syntax_tree() {
 
 // Task 1
 void parse_and_generate_AST() {
+    // Initialization
+    initialize_map();
+    
     // SCALAR and ARRAY Declaration Parsing
     parse_scalar();
     parse_array();

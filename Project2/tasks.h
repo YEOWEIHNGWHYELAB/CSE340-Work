@@ -3,6 +3,7 @@
 
 #include "execute.h"
 #include "lexer.h"
+#include <map>
 
 using namespace std;
 
@@ -16,20 +17,7 @@ typedef enum {
 } precedenceValue;
 
 // Index based Operator Precedence Table
-typedef enum {
-    OPP_PLUS,
-    OPP_MINUS,
-    OPP_MULT,
-    OPP_DIV,
-    OPP_LPAREN,
-    OPP_RPAREN,
-    OPP_LBRAC,
-    OPP_DOT,
-    OPP_RBRAC,
-    OPP_NUM,
-    OPP_ID,
-    OPP_EOE,
-} operatorValue;
+map<int, int> map_tokentype_indextable;
 
 typedef enum {
     EXPR,
@@ -114,15 +102,29 @@ int precedence_table[12][12] = {
     {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR, PREC_LESS, PREC_ERR, PREC_ERR, PREC_LESS, PREC_LESS, PREC_ACCEPT},
 };
 
+string valid_rhs[9] = {
+    "E - E",
+    "E + E",
+    "E * E",
+    "E / E",
+    "LPAREN E RPAREN",
+    "E LBRAC E RBRAC",
+    "E LBRAC DOT RBRAC",
+    "ID",
+    "NUM",
+};
+
+void duplicate_token(stackNode, Token);
 exprNode* parse_expr();
-operatorValue operator_mapper(Token);
 void operator_precedence_parsing(stackNode);
 void print_abstract_syntax_tree();
+stackNode stack_peeker_top();
 stackNode stack_peeker();
 void parse_assign_stmt();
 void parse_block();
 void parse_scalar();
 void parse_array();
+bool rhs_match(string);
 
 void parse_and_generate_AST();
 void parse_and_type_check();
