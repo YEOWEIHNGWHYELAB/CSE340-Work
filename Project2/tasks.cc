@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdio>
+#include <sstream>
 #include <cstdlib>
 #include "lexer.h"
 #include "execute.h"
@@ -98,6 +99,54 @@ stackNode stack_peeker() {
     }
 }
 
+// Reverses the stackNodes built from the RHS Stack and return a string of RHS
+string reverse_rhs_builder(vector<stackNode> rhs_stack) {
+    stringstream rhs_string_stream;
+
+    for (auto curr_stackNode = rhs_stack.end(); curr_stackNode >= rhs_stack.begin(); curr_stackNode--) {
+        if (curr_stackNode->type == TERM) {
+            if (curr_stackNode->term->token_type == PLUS) {
+                string expr_str = "+ ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == MINUS) {
+                string expr_str = "- ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == MULT) {
+                string expr_str = "* ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == DIV) {
+                string expr_str = "/ ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == LPAREN) {
+                string expr_str = "( ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == RPAREN) {
+                string expr_str = ") ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == LBRAC) {
+                string expr_str = "[ ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == RBRAC) {
+                string expr_str = "] ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == ID) {
+                string expr_str = "ID ";
+                rhs_string_stream << expr_str;
+            } else if (curr_stackNode->term->token_type == NUM) {
+                string expr_str = "NUM ";
+                rhs_string_stream << expr_str;
+            } else {
+                syntax_error();
+            }
+        } else {
+            string expr_str = "E ";
+            rhs_string_stream << expr_str;
+        }
+    }
+
+    return rhs_string_stream.str();
+}
+
 // Peek only the top stackNode of the stack
 stackNode stack_peeker_top() {
     return *stack.end();
@@ -112,7 +161,12 @@ void duplicate_token(stackNode src, Token dest) {
 
 // Check if the current rhs to match is valid
 bool rhs_match(string curr_rhs) {
+    for (string curr_str : valid_rhs) {
+        if (curr_rhs == curr_str) 
+            return true;
+    }
 
+    return false;
 }
 
 /**
@@ -152,29 +206,35 @@ void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input
         // Stack to store all the stackNode from the current RHS
         vector<stackNode> curr_rhs;
 
-        // Store the last pop term
-        Token* last_popped_term = new Token();
+        // 
+        Token* last_popped_term;
+        stackNode curr_top;
 
-        // Peek the top of stack
-        stackNode curr_top = stack_peeker_top();
-
-        // Get the first last popped token
-        duplicate_token(curr_top, *last_popped_term);
-        
         // Pop until the top of the stack is a term and the operator precedence become less than
-        while (curr_top.type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS) {
-            if (curr_top.type == TERM) {
-                last_popped_term = curr_top.term;
-            }
-            
-            curr_rhs.push_back(curr_top);
+        do {
+            // Store the last pop term
+            last_popped_term = new Token();
+
+            // Peek the top of stack
             curr_top = stack_peeker_top();
 
+            // Change the last popped token
+            if (curr_top.type == TERM) {
+                duplicate_token(curr_top, *last_popped_term);
+            }
+            
+            // Push stackNode into RHS
+            curr_rhs.push_back(curr_top);
+
+            // pop_back just delete last element without returning it
             stack.pop_back();
         }
+        while (!(curr_top.type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
+
+        string curr_rhs_str = reverse_rhs_builder(curr_rhs);
         
         // RHS calculated above
-        if (E -> RHS rule exists) {
+        if (rhs_match(curr_rhs_str)) {
             // we can think of E as the root of subtree for E -> RHS
             reduce E -> RHS
             stack.push_back(E);
@@ -205,6 +265,12 @@ exprNode* parse_expr() {
 
     // Peek current input token
     Token curr_input_token = peek_symbol();
+
+    // Initialize stack with a EOE first
+    stackNode *eoe_node = new stackNode();
+    eoe_node->type = TERM;
+    eoe_node->term = &eoe_token(curr_input_token.line_no);
+    stack.push_back(*eoe_node);
 
     // If $ is on top of the stack and lexer.peek() = $
     while ((curr_input_token.token_type == END_OF_FILE) && (curr_stack_term_top.term->token_type == END_OF_FILE)) {
@@ -252,6 +318,10 @@ void parse_block() {
     while (lexer.peek(1).token_type != RBRAC) {
         parse_assign_stmt();
     }
+    
+    // This will only run for one time (first statement)
+    // Perform BFS printing here (only if every statement has no syntax error)
+    print_abstract_syntax_tree();
 
     expect(RBRACE);
 }
@@ -295,9 +365,6 @@ void parse_and_generate_AST() {
 
     // End of statement parsing
     expect(END_OF_FILE);
-
-    // Perform BFS printing here (only if every statement has no syntax error)
-    print_abstract_syntax_tree();
 }
 
 // Task 2

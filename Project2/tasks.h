@@ -102,18 +102,20 @@ int precedence_table[12][12] = {
     {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR, PREC_LESS, PREC_ERR, PREC_ERR, PREC_LESS, PREC_LESS, PREC_ACCEPT},
 };
 
+// If the RHS is none of this, then it will be syntax error
 string valid_rhs[9] = {
-    "E - E",
-    "E + E",
-    "E * E",
-    "E / E",
-    "LPAREN E RPAREN",
-    "E LBRAC E RBRAC",
-    "E LBRAC DOT RBRAC",
-    "ID",
-    "NUM",
+    "E - E ",
+    "E + E ",
+    "E * E ",
+    "E / E ",
+    "( E ) ",
+    "E [ E ] ",
+    "E [ . ] ",
+    "ID ",
+    "NUM ",
 };
 
+string reverse_rhs_builder(vector<stackNode>);
 void duplicate_token(stackNode, Token);
 exprNode* parse_expr();
 void operator_precedence_parsing(stackNode);
