@@ -43,6 +43,16 @@ class Token {
     std::string lexeme;
     TokenType token_type;
     int line_no;
+
+    Token () {
+      
+    }
+
+    Token (std::string lexeme, TokenType token_type, int line_no) {
+      this->lexeme = lexeme;
+      this->token_type = token_type;
+      this->line_no = line_no;
+    }
 };
 
 class LexicalAnalyzer {

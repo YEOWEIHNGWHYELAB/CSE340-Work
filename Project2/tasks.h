@@ -4,6 +4,7 @@
 #include "execute.h"
 #include "lexer.h"
 #include <map>
+#include "error.h"
 
 using namespace std;
 
@@ -24,6 +25,23 @@ typedef enum {
     TERM
 } snodeType;
 
+typedef enum {
+    SCALAR_TYPE, 
+    ARRAY_TYPE, 
+    ARRAYDDECL_TYPE, 
+    ERROR_TYPE
+} exprNodeType;
+
+typedef enum {
+    ID_OPER, 
+    PLUS_OPER, 
+    MINUS_OPER,
+    MULT_OPER,
+    DIV_OPER,
+    ARRAY_ELEM_OPER, 
+    WHOLE_ARRAY_OPER
+} operatorType;
+
 // Either expression or a term
 struct stackNode {
     // enum type can be EXPR or TERM
@@ -38,25 +56,24 @@ struct stackNode {
 
 // Strictly of type expression
 struct exprNode {
-    // enum type: ID_OPER, PLUS_OPER, MINUS__OPER, DIV_OPER
-    int curr_operator;
+    // enum type: ID_OPER, PLUS_OPER, MINUS_OPER, DIV_OPER, ARRAY_ELEM_OPER, WHOLE_ARRAY_OPER
+    operatorType curr_operator;
 
-    // ARRAY_ELEM_OPER, WHOLE_ARRAY_OPER
-    int type; // type of expression SCALAR, ARRAY, ARRAYDDECL, or ERROR
+    // type of expression SCALAR, ARRAY, ARRAYDDECL, or ERROR
+    exprNodeType type;
     
     // these types are discussed later under type checking
     union {
-        // operator = ID
+        // operator = ID_OPER
         struct {
             string varName;
             int line_no;
         } id;
 
-        // operator = PLUS_OPER, MINUS_OPER
-        struct { 
-            // MULT_OPET or ARRAY_ELEM_OPER
-            struct treeNode *left;
-            struct treeNode *right;
+        // operator = PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET or ARRAY_ELEM_OPER
+        struct {
+            struct exprNode *left;
+            struct exprNode *right;
         } child;
 
         // operator = WHOLE_ARRAY_OPER
@@ -66,8 +83,33 @@ struct exprNode {
         } array;
     };
 
-    exprNode() {
+    // ID_OPER OR WHOLE_ARRAY_OPER
+    exprNode(operatorType operator_type, exprNodeType expr_type, string var_name, int line_num) {
+        this->curr_operator = operator_type;
+        this->type = expr_type;
 
+        if (this->curr_operator == ID_OPER) {
+            id.varName = var_name;
+            id.line_no = line_num;
+        } else if (this->curr_operator == WHOLE_ARRAY_OPER) {
+            array.arrayName = var_name;
+            array.line_no = line_num;
+        } else {
+            syntax_error();
+        }
+    }
+
+    // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
+    exprNode(operatorType operator_type, exprNodeType expr_type, exprNode* left_child, exprNode* right_child) {
+        this->curr_operator = operator_type;
+        this->type = expr_type;
+
+        if (this->curr_operator == PLUS_OPER || this->curr_operator == MINUS_OPER || this->curr_operator == DIV_OPER || this->curr_operator == MULT_OPER || this->curr_operator == ARRAY_ELEM_OPER) {
+            child.left = left_child;
+            child.right = right_child;
+        } else {
+            syntax_error();
+        }
     }
 };
 
@@ -103,16 +145,31 @@ int precedence_table[12][12] = {
 };
 
 // If the RHS is none of this, then it will be syntax error
+// But we will also need to store if it is unary or binary 
+// and the position of expr 
 string valid_rhs[9] = {
-    "E - E ",
-    "E + E ",
-    "E * E ",
-    "E / E ",
-    "( E ) ",
-    "E [ E ] ",
-    "E [ . ] ",
-    "ID ",
-    "NUM ",
+    "E-E",
+    "E+E",
+    "E*E",
+    "E/E",
+    "(E)",
+    "E[E]",
+    "E[.]",
+    "ID",
+    "NUM"
+};
+
+// -1 means that there is no expr index
+int expr_index[9][2] = {
+    {0, 2},
+    {0, 2},
+    {0, 2},
+    {0, 2},
+    {1, -1},
+    {0, 2},
+    {0, -1},
+    {-1, -1},
+    {-1, -1}
 };
 
 string reverse_rhs_builder(vector<stackNode>);
@@ -127,6 +184,7 @@ void parse_block();
 void parse_scalar();
 void parse_array();
 bool rhs_match(string);
+exprNodeType expr_type();
 
 void parse_and_generate_AST();
 void parse_and_type_check();

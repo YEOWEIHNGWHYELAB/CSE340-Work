@@ -10,6 +10,7 @@
 
 using namespace std;
 
+// Note that the stack is where you build the AST!
 LexicalAnalyzer lexer;
 vector<stackNode> stack;
 
@@ -30,16 +31,6 @@ void initialize_map() {
     map_tokentype_indextable.insert(pair<int, int>(NUM, 9));
     map_tokentype_indextable.insert(pair<int, int>(ID, 10));
     map_tokentype_indextable.insert(pair<int, int>(END_OF_FILE, 11));
-}
-
-// Returns a END_OF_EXPRESSION Token
-Token eoe_token(int line_num) {
-    Token *eoe_token = new Token();
-    eoe_token->lexeme = "$";
-    eoe_token->line_no = line_num;
-    eoe_token->token_type = END_OF_FILE;
-
-    return *eoe_token;
 }
 
 Token expect(TokenType expected_type) {
@@ -63,12 +54,12 @@ Token peek_symbol() {
     // If the next token is RBRAC and the token after that is EQUAL
     // If the next token is RBRAC and the token after that is SEMICOLON
     if (next_token_t1.token_type == SEMICOLON) {
-        return eoe_token(next_token_t1.line_no);
+        return Token("$", END_OF_FILE, next_token_t1.line_no);
     } else if (next_token_t1.token_type == RBRAC) {
         Token next_token_t2 = lexer.peek(2);
 
         if (next_token_t2.token_type == EQUAL || next_token_t2.token_type == SEMICOLON) {
-            return eoe_token(next_token_t1.line_no);
+            return Token("$", END_OF_FILE, next_token_t1.line_no);
         }
     }
 
@@ -106,40 +97,40 @@ string reverse_rhs_builder(vector<stackNode> rhs_stack) {
     for (auto curr_stackNode = rhs_stack.end(); curr_stackNode >= rhs_stack.begin(); curr_stackNode--) {
         if (curr_stackNode->type == TERM) {
             if (curr_stackNode->term->token_type == PLUS) {
-                string expr_str = "+ ";
+                string expr_str = "+";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == MINUS) {
-                string expr_str = "- ";
+                string expr_str = "-";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == MULT) {
-                string expr_str = "* ";
+                string expr_str = "*";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == DIV) {
-                string expr_str = "/ ";
+                string expr_str = "/";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == LPAREN) {
-                string expr_str = "( ";
+                string expr_str = "(";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == RPAREN) {
-                string expr_str = ") ";
+                string expr_str = ")";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == LBRAC) {
-                string expr_str = "[ ";
+                string expr_str = "[";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == RBRAC) {
-                string expr_str = "] ";
+                string expr_str = "]";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == ID) {
-                string expr_str = "ID ";
+                string expr_str = "ID";
                 rhs_string_stream << expr_str;
             } else if (curr_stackNode->term->token_type == NUM) {
-                string expr_str = "NUM ";
+                string expr_str = "NUM";
                 rhs_string_stream << expr_str;
             } else {
                 syntax_error();
             }
         } else {
-            string expr_str = "E ";
+            string expr_str = "E";
             rhs_string_stream << expr_str;
         }
     }
@@ -167,6 +158,41 @@ bool rhs_match(string curr_rhs) {
     }
 
     return false;
+}
+
+// Return the type of operator the expression string that is reduced
+operatorType operator_type(string curr_rhs) {
+    if (curr_rhs == "NUM" || curr_rhs == "ID" || curr_rhs == "(E)") {
+        return ID_OPER; 
+    } else if (curr_rhs == "E+E") {
+        return PLUS_OPER;
+    } else if (curr_rhs == "E-E") {
+        return MINUS_OPER;
+    } else if (curr_rhs == "E*E") {
+        return MULT_OPER;
+    } else if (curr_rhs == "E/E") {
+        return DIV_OPER;
+    } else if (curr_rhs == "E[E]") {
+        return ARRAY_ELEM_OPER;
+    } else if (curr_rhs == "E[.]") {
+        return WHOLE_ARRAY_OPER;
+    } else {
+        syntax_error();
+    }
+}
+
+exprNodeType expr_type(string varname) {
+    for (auto ii : scalar_list) {
+        if (ii.lexeme == varname) 
+            return SCALAR_TYPE;
+    }
+
+    for (auto ii : array_list) {
+        if (ii.lexeme == varname) 
+            return ARRAY_TYPE;
+    }
+
+    return ERROR_TYPE;
 }
 
 /**
@@ -231,13 +257,55 @@ void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input
         }
         while (!(curr_top.type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
 
+        // Get the RHS string
         string curr_rhs_str = reverse_rhs_builder(curr_rhs);
         
         // RHS calculated above
         if (rhs_match(curr_rhs_str)) {
-            // we can think of E as the root of subtree for E -> RHS
-            reduce E -> RHS
-            stack.push_back(E);
+            // Determine the type of operator
+            operatorType curr_operator = operator_type(curr_rhs_str);
+
+            // We can think of curr_expr as the root of subtree for curr_expr -> RHS
+            exprNode* curr_expr;
+
+            auto curr_rhs_it = curr_rhs.end();
+
+            // Reduction part is done below
+
+            // Determine the kind of exprNode to build
+            if (curr_operator == ID_OPER || curr_operator == WHOLE_ARRAY_OPER) {
+                // ID_OPER OR WHOLE_ARRAY_OPER
+
+                exprNodeType curr_expr_type = expr_type(curr_rhs_it->term->lexeme);
+
+                curr_expr = new exprNode(curr_operator, curr_expr_type, curr_rhs_it->term->lexeme, curr_rhs_it->term->line_no);
+            } else {
+                // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
+                
+                // First expression
+                exprNodeType left_child_type = curr_rhs_it->expr->type;
+                exprNode* left_child = curr_rhs_it->expr;
+
+                // Second expression
+                curr_rhs_it -= 2;
+                exprNodeType right_child_type = curr_rhs_it->expr->type;
+                exprNode* right_child = curr_rhs_it->expr;
+
+                // Type of new node
+                if (right_child_type != left_child_type) {
+                    curr_expr = new exprNode(curr_operator, ERROR_TYPE, left_child, right_child);
+                } else {
+                    curr_expr = new exprNode(curr_operator, left_child_type, left_child, right_child);
+                }
+            }
+
+            // Create stack node to house the current expre...
+            stackNode* stack_node_expr = new stackNode();
+            stack_node_expr->type = EXPR;
+            stack_node_expr->expr = curr_expr;
+
+            // Push the expression built onto stack
+            stack.push_back(*stack_node_expr);
         } else {
             syntax_error();
         }
@@ -267,10 +335,10 @@ exprNode* parse_expr() {
     Token curr_input_token = peek_symbol();
 
     // Initialize stack with a EOE first
-    stackNode *eoe_node = new stackNode();
-    eoe_node->type = TERM;
-    eoe_node->term = &eoe_token(curr_input_token.line_no);
-    stack.push_back(*eoe_node);
+    stackNode eoe_node;
+    eoe_node.type = TERM;
+    eoe_node.term = new Token("$", END_OF_FILE, curr_input_token.line_no);
+    stack.push_back(eoe_node);
 
     // If $ is on top of the stack and lexer.peek() = $
     while ((curr_input_token.token_type == END_OF_FILE) && (curr_stack_term_top.term->token_type == END_OF_FILE)) {
@@ -280,7 +348,7 @@ exprNode* parse_expr() {
         curr_input_token = peek_symbol();
     }
 
-    return new exprNode();
+    return stack.at(1).expr;
 }
 
 void parse_assign_stmt() {
