@@ -394,9 +394,6 @@ void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input
  *      3. Build the abstract syntax tree after the reduction
 */
 exprNode* parse_expr() {
-    // Peek top terminal of stack
-    stackNode curr_stack_term_top = stack_peeker();
-
     // Peek current input token
     Token curr_input_token = peek_symbol();
 
@@ -406,6 +403,18 @@ exprNode* parse_expr() {
     eoe_node.term = new Token("$", END_OF_FILE, curr_input_token.line_no);
     stack.push_back(eoe_node);
 
+    // Peek top terminal of stack
+    stackNode curr_stack_term_top = stack_peeker();
+
+    // Test
+    /*
+    stackNode node1;
+    node1.type = EXPR;
+    node1.expr = new exprNode(ID_OPER, SCALAR_TYPE, "abc", 2);
+    stack.push_back(node1);
+    cout << "TYPE: " + to_string(stack.at(1).expr->type) + "VarName: " + stack.at(1).expr->id.varName << endl;
+    */
+    
     // If $ is on top of the stack and lexer.peek() = $
     while ((curr_input_token.token_type == END_OF_FILE) && (curr_stack_term_top.term->token_type == END_OF_FILE)) {
         operator_precedence_parsing(curr_stack_term_top, curr_input_token);
@@ -414,6 +423,7 @@ exprNode* parse_expr() {
         curr_input_token = peek_symbol();
     }
 
+    // Return the root node of expression
     return stack.at(1).expr;
 }
 
@@ -489,7 +499,7 @@ void parse_array() {
  * Prints the abstract syntax tree using BFS
 */
 void print_abstract_syntax_tree() {
-    vector<exprNode> visited;
+    // vector<exprNode> visited;
 
     /*
     visited.resize(root, false);
@@ -519,6 +529,24 @@ void print_abstract_syntax_tree() {
     }
     */
 }
+
+/*
+void test_stack_peeker() {
+    stackNode eoe_node1;
+    eoe_node1.type = TERM;
+    eoe_node1.term = new Token("$", END_OF_FILE, 1);
+    stack.push_back(eoe_node1);
+
+    stackNode eoe_node2;
+    eoe_node2.type = TERM;
+    eoe_node2.term = new Token("$", END_OF_FILE, 2);
+    stack.push_back(eoe_node2);
+
+    stackNode top = stack_peeker();
+    cout << "{" << top.term->lexeme << " , "
+         << top.term->line_no << "}\n";
+}
+*/
 
 // Task 1
 void parse_and_generate_AST() {
