@@ -17,9 +17,6 @@ typedef enum {
     PREC_ACCEPT
 } precedenceValue;
 
-// Index based Operator Precedence Table
-map<int, int> map_tokentype_indextable;
-
 typedef enum {
     EXPR,
     TERM
@@ -111,65 +108,6 @@ struct exprNode {
             syntax_error();
         }
     }
-};
-
-// Used to map to operatorValue
-string symbolMap[12] = {
-    "PLUS",
-    "MINUS",
-    "MULT",
-    "DIV",
-    "LPAREN",
-    "RPAREN",
-    "LBRAC",
-    "DOT",
-    "RBRAC",
-    "NUM",
-    "ID",
-    "END_OF_FILE"
-};
-
-int precedence_table[12][12] = {
-    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
-    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_LESS, PREC_ERR, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_EQUAL, PREC_LESS, PREC_LESS, PREC_ERR},
-    {PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_EQUAL, PREC_ERR, PREC_ERR, PREC_ERR},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
-    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR, PREC_LESS, PREC_ERR, PREC_ERR, PREC_LESS, PREC_LESS, PREC_ACCEPT},
-};
-
-// If the RHS is none of this, then it will be syntax error
-// But we will also need to store if it is unary or binary 
-// and the position of expr 
-string valid_rhs[9] = {
-    "E-E",
-    "E+E",
-    "E*E",
-    "E/E",
-    "(E)",
-    "E[E]",
-    "E[.]",
-    "ID",
-    "NUM"
-};
-
-// -1 means that there is no expr index
-int expr_index[9][2] = {
-    {0, 2},
-    {0, 2},
-    {0, 2},
-    {0, 2},
-    {1, -1},
-    {0, 2},
-    {0, -1},
-    {-1, -1},
-    {-1, -1}
 };
 
 string reverse_rhs_builder(vector<stackNode>);

@@ -14,8 +14,74 @@ using namespace std;
 LexicalAnalyzer lexer;
 vector<stackNode> stack;
 
+// Scalar & Vector declare list
 vector<Token> scalar_list;
 vector<Token> array_list;
+
+// Root of exprNode
+exprNode* root;
+
+// Index based Operator Precedence Table
+map<int, int> map_tokentype_indextable;
+
+// Used to map to operatorValue
+string symbolMap[12] = {
+    "PLUS",
+    "MINUS",
+    "MULT",
+    "DIV",
+    "LPAREN",
+    "RPAREN",
+    "LBRAC",
+    "DOT",
+    "RBRAC",
+    "NUM",
+    "ID",
+    "END_OF_FILE"
+};
+
+int precedence_table[12][12] = {
+    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_LESS, PREC_ERR, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_EQUAL, PREC_EQUAL, PREC_LESS, PREC_LESS, PREC_ERR},
+    {PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_ERR, PREC_EQUAL, PREC_ERR, PREC_ERR, PREC_ERR},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_GREATER, PREC_ERR, PREC_GREATER, PREC_ERR, PREC_ERR, PREC_GREATER},
+    {PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_LESS, PREC_ERR, PREC_LESS, PREC_ERR, PREC_ERR, PREC_LESS, PREC_LESS, PREC_ACCEPT},
+};
+
+// If the RHS is none of this, then it will be syntax error
+// But we will also need to store if it is unary or binary 
+// and the position of expr 
+string valid_rhs[9] = {
+    "E-E",
+    "E+E",
+    "E*E",
+    "E/E",
+    "(E)",
+    "E[E]",
+    "E[.]",
+    "ID",
+    "NUM"
+};
+
+// -1 means that there is no expr index
+int expr_index[9][2] = {
+    {0, 2},
+    {0, 2},
+    {0, 2},
+    {0, 2},
+    {1, -1},
+    {0, 2},
+    {0, -1},
+    {-1, -1},
+    {-1, -1}
+};
 
 // Initailize the map that maps token type index to the correct index precedence table 
 void initialize_map() {
@@ -353,6 +419,7 @@ exprNode* parse_expr() {
 
 void parse_assign_stmt() {
     expect(ID);
+
     Token t1 = lexer.peek(1);
     Token t2 = lexer.peek(2);
 
@@ -367,7 +434,7 @@ void parse_assign_stmt() {
     } else if (t1.token_type == LBRAC) {
         // array access but not .
         expect(LBRAC);
-        parse_expr();
+        root = parse_expr();
         expect(RBRAC);
     }
 
@@ -375,22 +442,28 @@ void parse_assign_stmt() {
     // or we are dealing with the case ID =
     // in all cases, the next token must be EQUAL
     expect(EQUAL);
-    parse_expr();
+    root = parse_expr();
     expect(SEMICOLON);
 }
 
 void parse_block() {
     expect(LBRACE);
 
+    bool has_run_first_statement = false;
+
     // Parse Statements 1 statement at a time
     while (lexer.peek(1).token_type != RBRAC) {
         parse_assign_stmt();
+
+        if (!has_run_first_statement) {
+            // This will only run for one time (first statement)
+            // Perform BFS printing here (only if every statement has no syntax error)
+            print_abstract_syntax_tree();
+        }
+
+        has_run_first_statement = true;
     }
     
-    // This will only run for one time (first statement)
-    // Perform BFS printing here (only if every statement has no syntax error)
-    print_abstract_syntax_tree();
-
     expect(RBRACE);
 }
 
@@ -416,7 +489,35 @@ void parse_array() {
  * Prints the abstract syntax tree using BFS
 */
 void print_abstract_syntax_tree() {
+    vector<exprNode> visited;
 
+    /*
+    visited.resize(root, false);
+ 
+    // Create a queue for BFS
+    list<exprNode> queue;
+ 
+    // Mark the current node as visited and enqueue it
+    visited[s] = true;
+    queue.push_back(s);
+ 
+    while (!queue.empty()) {
+        // Dequeue a vertex from queue and print it
+        s = queue.front();
+        cout << s << " ";
+        queue.pop_front();
+ 
+        // Get all adjacent vertices of the dequeued
+        // vertex s. If a adjacent has not been visited,
+        // then mark it visited and enqueue it
+        for (auto adjecent: adj[s]) {
+            if (!visited[adjecent]) {
+                visited[adjecent] = true;
+                queue.push_back(adjecent);
+            }
+        }
+    }
+    */
 }
 
 // Task 1
