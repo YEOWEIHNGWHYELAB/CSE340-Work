@@ -23,3 +23,21 @@ You can refer to lecture notes for operator precedence parsing. At step 2 and 3 
 After the step 2 and 3 of parse_expr(), you will have the regex stack of the exprNode. Then it is where you already have abstract syntax tree, and then when the parse_expr() returns, it will return the root exprNode to which you will be performing the BFS on.
 
 Stack node vs Expression node. Stack node are the nodes you are pushing to the stack, it could be a terminal or an expression. But an expression node is the tree you are building and each of which will be a expression.
+
+parse_block() has 2 statements -> assignments and output statements. Block gives assignment and output statements.
+
+You need to have a parse_statement_list() too. Statement list have a statement or statements and statement then have assignment and output list.
+
+In parse_statement_list(), you will then call parse_statement -> then based on that decide whether you want to call parse_outout or parse_assignment statement.
+
+Also the parse_assign_stmt() given in the project implementation document (or your current implementation) will not let you parse the entire statement, that one only lets you parse the expression within the assignment statements, so if the statement is like a[expr] = expr;, you will only parse up to the first expr within the [].
+
+Don't use lexer.peek(), use peek_symbol instead.
+
+Also you should do operator_precedence_parsing inside parse_expr() instead of sepearately.
+
+Also your do while loop, your first while condition should use stack.peek instead of your curr_top since curr_top is already removed and we would like to view the next thing in the stack.
+
+Your current reduction if else consdition is wrong, ID_OPER and WHOLE_ARRAY_OPER need to be done separately. ID_OPER and NUM_OPER can be done together though.
+
+WHOLE_ARRAY_OPER should have 2 nodes in total. Unlike the NUM_OPER and ID_OPER which only have a single EXPR node.

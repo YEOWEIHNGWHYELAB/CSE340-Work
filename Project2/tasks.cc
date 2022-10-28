@@ -70,19 +70,6 @@ string valid_rhs[9] = {
     "NUM"
 };
 
-// -1 means that there is no expr index
-int expr_index[9][2] = {
-    {0, 2},
-    {0, 2},
-    {0, 2},
-    {0, 2},
-    {1, -1},
-    {0, 2},
-    {0, -1},
-    {-1, -1},
-    {-1, -1}
-};
-
 // Initailize the map that maps token type index to the correct index precedence table 
 void initialize_map() {
     map_tokentype_indextable.insert(pair<int, int>(PLUS, 0));
@@ -321,7 +308,7 @@ void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input
             // pop_back just delete last element without returning it
             stack.pop_back();
         }
-        while (!(curr_top.type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
+        while (!(stack.top().type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
 
         // Get the RHS string
         string curr_rhs_str = reverse_rhs_builder(curr_rhs);
@@ -339,7 +326,7 @@ void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input
             // Reduction part is done below
 
             // Determine the kind of exprNode to build
-            if (curr_operator == ID_OPER || curr_operator == WHOLE_ARRAY_OPER) {
+            if (curr_operator == ID_OPER || curr_operator == NUM_OPER) {
                 // ID_OPER OR WHOLE_ARRAY_OPER
 
                 exprNodeType curr_expr_type = expr_type(curr_rhs_it->term->lexeme);
@@ -406,17 +393,8 @@ exprNode* parse_expr() {
     // Peek top terminal of stack
     stackNode curr_stack_term_top = stack_peeker();
 
-    // Test
-    /*
-    stackNode node1;
-    node1.type = EXPR;
-    node1.expr = new exprNode(ID_OPER, SCALAR_TYPE, "abc", 2);
-    stack.push_back(node1);
-    cout << "TYPE: " + to_string(stack.at(1).expr->type) + "VarName: " + stack.at(1).expr->id.varName << endl;
-    */
-    
-    // If $ is on top of the stack and lexer.peek() = $
-    while ((curr_input_token.token_type == END_OF_FILE) && (curr_stack_term_top.term->token_type == END_OF_FILE)) {
+    // If $ is on top of the stack and lexer.peek() = ;
+    while (!((curr_input_token.token_type == END_OF_FILE) && (curr_stack_term_top.term->token_type == END_OF_FILE))) {
         operator_precedence_parsing(curr_stack_term_top, curr_input_token);
 
         curr_stack_term_top = stack_peeker();
@@ -456,6 +434,11 @@ void parse_assign_stmt() {
     expect(SEMICOLON);
 }
 
+void parse_statement_list() {
+    
+}
+
+// Issue 
 void parse_block() {
     expect(LBRACE);
 
@@ -529,24 +512,6 @@ void print_abstract_syntax_tree() {
     }
     */
 }
-
-/*
-void test_stack_peeker() {
-    stackNode eoe_node1;
-    eoe_node1.type = TERM;
-    eoe_node1.term = new Token("$", END_OF_FILE, 1);
-    stack.push_back(eoe_node1);
-
-    stackNode eoe_node2;
-    eoe_node2.type = TERM;
-    eoe_node2.term = new Token("$", END_OF_FILE, 2);
-    stack.push_back(eoe_node2);
-
-    stackNode top = stack_peeker();
-    cout << "{" << top.term->lexeme << " , "
-         << top.term->line_no << "}\n";
-}
-*/
 
 // Task 1
 void parse_and_generate_AST() {
