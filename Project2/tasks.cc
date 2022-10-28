@@ -24,6 +24,9 @@ exprNode* root;
 // Index based Operator Precedence Table
 map<int, int> map_tokentype_indextable;
 
+// Graph node count
+int num_vertices = 0;
+
 // Used to map to operatorValue
 string symbolMap[12] = {
     "PLUS",
@@ -215,8 +218,10 @@ bool rhs_match(string curr_rhs) {
 
 // Return the type of operator the expression string that is reduced
 operatorType operator_type(string curr_rhs) {
-    if (curr_rhs == "NUM" || curr_rhs == "ID" || curr_rhs == "(E)") {
-        return ID_OPER; 
+    if (curr_rhs == "ID" || curr_rhs == "(E)") {
+        return ID_OPER;
+    } else if (curr_rhs == "NUM") {
+        return NUM_OPER;
     } else if (curr_rhs == "E+E") {
         return PLUS_OPER;
     } else if (curr_rhs == "E-E") {
@@ -249,125 +254,6 @@ exprNodeType expr_type(string varname) {
 }
 
 /**
- * Performs operator precedence parsing
- * 
- * There are 2 possible action -> Reduce or Shift
-*/
-void operator_precedence_parsing(stackNode curr_stack_term_top, Token curr_input_token) {
-    /**
-     * curr_stack_term_top is the current term on top or just below top of stack while
-     * curr_input_token is the current input token
-     * 
-     * In the notes, 
-     * a is the token on top or just below of stack
-     * t is the token from input
-     * b is the token type of t 
-    */
-    int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
-    int b = map_tokentype_indextable[curr_input_token.token_type];
-
-    if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
-        // Shift
-
-        // Get token from input first
-        Token t = get_symbol();
-
-        // Build the stack node from token
-        stackNode t_stack_node;
-        t_stack_node.type = TERM;
-        t_stack_node.term = &t; 
-
-        // Push to stack
-        stack.push_back(t_stack_node);
-    } else if (precedence_table[a][b] == PREC_GREATER) {
-        // Reduce
-        
-        // Stack to store all the stackNode from the current RHS
-        vector<stackNode> curr_rhs;
-
-        // 
-        Token* last_popped_term;
-        stackNode curr_top;
-
-        // Pop until the top of the stack is a term and the operator precedence become less than
-        do {
-            // Store the last pop term
-            last_popped_term = new Token();
-
-            // Peek the top of stack
-            curr_top = stack_peeker_top();
-
-            // Change the last popped token
-            if (curr_top.type == TERM) {
-                duplicate_token(curr_top, *last_popped_term);
-            }
-            
-            // Push stackNode into RHS
-            curr_rhs.push_back(curr_top);
-
-            // pop_back just delete last element without returning it
-            stack.pop_back();
-        }
-        while (!(stack.top().type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
-
-        // Get the RHS string
-        string curr_rhs_str = reverse_rhs_builder(curr_rhs);
-        
-        // RHS calculated above
-        if (rhs_match(curr_rhs_str)) {
-            // Determine the type of operator
-            operatorType curr_operator = operator_type(curr_rhs_str);
-
-            // We can think of curr_expr as the root of subtree for curr_expr -> RHS
-            exprNode* curr_expr;
-
-            auto curr_rhs_it = curr_rhs.end();
-
-            // Reduction part is done below
-
-            // Determine the kind of exprNode to build
-            if (curr_operator == ID_OPER || curr_operator == NUM_OPER) {
-                // ID_OPER OR WHOLE_ARRAY_OPER
-
-                exprNodeType curr_expr_type = expr_type(curr_rhs_it->term->lexeme);
-
-                curr_expr = new exprNode(curr_operator, curr_expr_type, curr_rhs_it->term->lexeme, curr_rhs_it->term->line_no);
-            } else {
-                // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
-                
-                // First expression
-                exprNodeType left_child_type = curr_rhs_it->expr->type;
-                exprNode* left_child = curr_rhs_it->expr;
-
-                // Second expression
-                curr_rhs_it -= 2;
-                exprNodeType right_child_type = curr_rhs_it->expr->type;
-                exprNode* right_child = curr_rhs_it->expr;
-
-                // Type of new node
-                if (right_child_type != left_child_type) {
-                    curr_expr = new exprNode(curr_operator, ERROR_TYPE, left_child, right_child);
-                } else {
-                    curr_expr = new exprNode(curr_operator, left_child_type, left_child, right_child);
-                }
-            }
-
-            // Create stack node to house the current expre...
-            stackNode* stack_node_expr = new stackNode();
-            stack_node_expr->type = EXPR;
-            stack_node_expr->expr = curr_expr;
-
-            // Push the expression built onto stack
-            stack.push_back(*stack_node_expr);
-        } else {
-            syntax_error();
-        }
-    } else {
-        syntax_error();
-    }
-}
-
-/**
  * Stack operations
  * 
  * 1) Peek at the terminal closest to the top this is either the top of 
@@ -385,17 +271,140 @@ exprNode* parse_expr() {
     Token curr_input_token = peek_symbol();
 
     // Initialize stack with a EOE first
-    stackNode eoe_node;
-    eoe_node.type = TERM;
-    eoe_node.term = new Token("$", END_OF_FILE, curr_input_token.line_no);
-    stack.push_back(eoe_node);
+    if (stack.empty()) {
+        stackNode eoe_node;
+        eoe_node.type = TERM;
+        eoe_node.term = new Token("$", END_OF_FILE, curr_input_token.line_no);
+        stack.push_back(eoe_node);
+    }
 
     // Peek top terminal of stack
     stackNode curr_stack_term_top = stack_peeker();
 
-    // If $ is on top of the stack and lexer.peek() = ;
-    while (!((curr_input_token.token_type == END_OF_FILE) && (curr_stack_term_top.term->token_type == END_OF_FILE))) {
-        operator_precedence_parsing(curr_stack_term_top, curr_input_token);
+    // If $ is on top of the stack and lexer.peek();
+    while (!((curr_stack_term_top.term->token_type == END_OF_FILE) && (curr_input_token.token_type == END_OF_FILE))) {
+        /**
+         * curr_stack_term_top is the current term on top or just below top of stack while
+         * curr_input_token is the current input token
+         * 
+         * In the notes, 
+         * a is the token on top or just below of stack
+         * t is the token from input
+         * b is the token type of t 
+        */
+        int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
+        int b = map_tokentype_indextable[curr_input_token.token_type];
+
+        if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
+            // Shift
+
+            // Get token from input first
+            Token t = get_symbol();
+
+            // Build the stack node from token
+            stackNode t_stack_node;
+            t_stack_node.type = TERM;
+            t_stack_node.term = &t; 
+
+            // Push to stack
+            stack.push_back(t_stack_node);
+        } else if (precedence_table[a][b] == PREC_GREATER) {
+            // Reduce
+            
+            // Stack to store all the stackNode from the current RHS
+            vector<stackNode> curr_rhs;
+
+            // 
+            Token* last_popped_term;
+            stackNode curr_top;
+
+            // Pop until the top of the stack is a term and the operator precedence become less than
+            do {
+                // Store the last pop term
+                last_popped_term = new Token();
+
+                // Peek the top of stack
+                curr_top = stack_peeker_top();
+
+                // Change the last popped token
+                if (curr_top.type == TERM) {
+                    duplicate_token(curr_top, *last_popped_term);
+                }
+                
+                // Push stackNode into RHS
+                curr_rhs.push_back(curr_top);
+
+                // pop_back just delete last element without returning it
+                stack.pop_back();
+            }
+            while (!(stack.end()->type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
+
+            // Get the RHS string
+            string curr_rhs_str = reverse_rhs_builder(curr_rhs);
+            
+            // RHS calculated above
+            if (rhs_match(curr_rhs_str)) {
+                // Determine the type of operator
+                operatorType curr_operator = operator_type(curr_rhs_str);
+
+                // We can think of curr_expr as the root of subtree for curr_expr -> RHS
+                exprNode* curr_expr;
+
+                auto curr_rhs_it = curr_rhs.end();
+
+                // Reduction part is done below
+
+                // Determine the kind of exprNode to build
+                if (curr_operator == ID_OPER || curr_operator == NUM_OPER) {
+                    // ID_OPER OR WHOLE_ARRAY_OPER
+                    exprNodeType curr_expr_type = expr_type(curr_rhs_it->term->lexeme);
+
+                    curr_expr = new exprNode(curr_operator, curr_expr_type, curr_rhs_it->term->lexeme, curr_rhs_it->term->line_no);
+
+                    num_vertices += 1;
+                } else if (curr_operator == WHOLE_ARRAY_OPER) {
+                    // WHOLE_ARRAY_OPER
+                    exprNodeType left_child_type = curr_rhs_it->expr->type;
+                    exprNode* left_child = curr_rhs_it->expr;
+
+                    curr_expr = new exprNode(curr_operator, left_child_type, left_child, nullptr);
+
+                    num_vertices += 1;
+                } else {
+                    // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
+                    
+                    // First expression
+                    exprNodeType left_child_type = curr_rhs_it->expr->type;
+                    exprNode* left_child = curr_rhs_it->expr;
+
+                    // Second expression
+                    curr_rhs_it -= 2;
+                    exprNodeType right_child_type = curr_rhs_it->expr->type;
+                    exprNode* right_child = curr_rhs_it->expr;
+
+                    // Type of new node
+                    if (right_child_type != left_child_type) {
+                        curr_expr = new exprNode(curr_operator, ERROR_TYPE, left_child, right_child);
+                    } else {
+                        curr_expr = new exprNode(curr_operator, left_child_type, left_child, right_child);
+                    }
+
+                    num_vertices += 1;
+                }
+
+                // Create stack node to house the current expre...
+                stackNode* stack_node_expr = new stackNode();
+                stack_node_expr->type = EXPR;
+                stack_node_expr->expr = curr_expr;
+
+                // Push the expression built onto stack
+                stack.push_back(*stack_node_expr);
+            } else {
+                syntax_error();
+            }
+        } else {
+            syntax_error();
+        }
 
         curr_stack_term_top = stack_peeker();
         curr_input_token = peek_symbol();
@@ -403,6 +412,26 @@ exprNode* parse_expr() {
 
     // Return the root node of expression
     return stack.at(1).expr;
+}
+
+void parse_output_stmt() {
+    expect(OUTPUT);
+    expect(ID);
+
+    if (peek_symbol().token_type == LBRAC) {
+        expect(LBRAC);
+
+        // Check if there's is need to do operator precedence parsing
+        if (peek_symbol().token_type == DOT) {
+            expect(DOT);
+        } else {
+            root = parse_expr();
+        }
+        
+        expect(RBRAC);
+    }
+
+    expect(SEMICOLON);
 }
 
 void parse_assign_stmt() {
@@ -434,20 +463,17 @@ void parse_assign_stmt() {
     expect(SEMICOLON);
 }
 
-void parse_statement_list() {
-    
-}
-
-// Issue 
-void parse_block() {
-    expect(LBRACE);
-
+void parse_stmt_list() {
     bool has_run_first_statement = false;
 
     // Parse Statements 1 statement at a time
-    while (lexer.peek(1).token_type != RBRAC) {
-        parse_assign_stmt();
-
+    while (peek_symbol().token_type != RBRACE) {
+        if (peek_symbol().token_type == OUTPUT) {
+            parse_output_stmt();
+        } else {
+            parse_assign_stmt();
+        }
+        
         if (!has_run_first_statement) {
             // This will only run for one time (first statement)
             // Perform BFS printing here (only if every statement has no syntax error)
@@ -455,15 +481,26 @@ void parse_block() {
         }
 
         has_run_first_statement = true;
+
+        // Clear the stack after every statement
+        stack.clear();
+
+        // Reset the vertices count
+        num_vertices = 0;
     }
-    
+}
+
+// Issue 
+void parse_block() {
+    expect(LBRACE);
+    parse_stmt_list();
     expect(RBRACE);
 }
 
 void parse_scalar() {
     expect(SCALAR);
 
-    while (lexer.peek(1).token_type != ARRAY) {
+    while (peek_symbol().token_type != ARRAY) {
         Token curr_var = expect(ID);
         scalar_list.push_back(curr_var);
     }
@@ -472,7 +509,7 @@ void parse_scalar() {
 void parse_array() {
     expect(ARRAY);
 
-    while (lexer.peek(1).token_type != LBRACE) {
+    while (peek_symbol().token_type != LBRACE) {
         Token curr_var = expect(ID);
         scalar_list.push_back(curr_var);
     }

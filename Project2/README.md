@@ -28,7 +28,7 @@ parse_block() has 2 statements -> assignments and output statements. Block gives
 
 You need to have a parse_statement_list() too. Statement list have a statement or statements and statement then have assignment and output list.
 
-In parse_statement_list(), you will then call parse_statement -> then based on that decide whether you want to call parse_outout or parse_assignment statement.
+In parse_statement_list(), you will then call parse_statement -> then based on that decide whether you want to call parse_output or parse_assignment_statement.
 
 Also the parse_assign_stmt() given in the project implementation document (or your current implementation) will not let you parse the entire statement, that one only lets you parse the expression within the assignment statements, so if the statement is like a[expr] = expr;, you will only parse up to the first expr within the [].
 

@@ -30,7 +30,8 @@ typedef enum {
 } exprNodeType;
 
 typedef enum {
-    ID_OPER, 
+    ID_OPER,
+    NUM_OPER, 
     PLUS_OPER, 
     MINUS_OPER,
     MULT_OPER,
@@ -118,6 +119,7 @@ void print_abstract_syntax_tree();
 stackNode stack_peeker_top();
 stackNode stack_peeker();
 void parse_assign_stmt();
+void parse_stmt_list();
 void parse_block();
 void parse_scalar();
 void parse_array();

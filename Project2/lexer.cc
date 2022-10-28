@@ -156,7 +156,7 @@ Token LexicalAnalyzer::ScanIdOrKeyword() {
 Token LexicalAnalyzer::GetToken() {
     Token token;
 
-    if (index == static_cast<int>(tokenList.size())){       // return end of file if
+    if (index == static_cast<int>(tokenList.size())) {       // return end of file if
         token.lexeme = "";                // index is too large
         token.line_no = line_no;
         token.token_type = END_OF_FILE;
