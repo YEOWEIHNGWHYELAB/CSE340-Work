@@ -13,6 +13,8 @@ using namespace std;
 // Note that the stack is where you build the AST!
 LexicalAnalyzer lexer;
 
+// Stack to store
+vector<stackNode> ast_stack;
 vector<stackNode> stack;
 
 // Scalar & Vector declare list
@@ -24,9 +26,6 @@ exprNode* root;
 
 // Index based Operator Precedence Table
 map<int, int> map_tokentype_indextable;
-
-// Graph node count
-int num_vertices = 0;
 
 // Used to map to operatorValue
 string symbolMap[12] = {
@@ -111,12 +110,22 @@ Token peek_symbol() {
     // If the next token is RBRAC and the token after that is EQUAL
     // If the next token is RBRAC and the token after that is SEMICOLON
     if (next_token_t1.token_type == SEMICOLON) {
-        return Token("$", END_OF_FILE, next_token_t1.line_no);
+        Token eoe_tok;
+        eoe_tok.lexeme = "$";
+        eoe_tok.token_type = END_OF_FILE;
+        eoe_tok.line_no = next_token_t1.line_no;
+
+        return eoe_tok;
     } else if (next_token_t1.token_type == RBRAC) {
         Token next_token_t2 = lexer.peek(2);
 
         if (next_token_t2.token_type == EQUAL || next_token_t2.token_type == SEMICOLON) {
-            return Token("$", END_OF_FILE, next_token_t1.line_no);
+            Token eoe_tok;
+            eoe_tok.lexeme = "$";
+            eoe_tok.token_type = END_OF_FILE;
+            eoe_tok.line_no = next_token_t1.line_no;
+
+            return eoe_tok;
         }
     }
 
@@ -272,12 +281,16 @@ exprNode* parse_expr() {
     Token curr_input_token = peek_symbol();
 
     // Initialize stack with a EOE first
-    if (stack.empty()) {
-        stackNode eoe_node;
-        eoe_node.type = TERM;
-        eoe_node.term = new Token("$", END_OF_FILE, curr_input_token.line_no);
-        stack.push_back(eoe_node);
-    }
+    stack.clear();
+    stackNode eoe_node;
+    eoe_node.type = TERM;
+    Token eoe_tok;
+    eoe_tok.lexeme = "$";
+    eoe_tok.token_type = END_OF_FILE;
+    eoe_tok.line_no = curr_input_token.line_no;
+    eoe_node.term = &eoe_tok;
+    
+    stack.push_back(eoe_node);
 
     // Peek top terminal of stack
     stackNode curr_stack_term_top = stack_peeker();
@@ -361,16 +374,12 @@ exprNode* parse_expr() {
                     exprNodeType curr_expr_type = expr_type(curr_rhs_it->term->lexeme);
 
                     curr_expr = new exprNode(curr_operator, curr_expr_type, curr_rhs_it->term->lexeme, curr_rhs_it->term->line_no);
-
-                    num_vertices += 1;
                 } else if (curr_operator == WHOLE_ARRAY_OPER) {
                     // WHOLE_ARRAY_OPER
                     exprNodeType left_child_type = curr_rhs_it->expr->type;
                     exprNode* left_child = curr_rhs_it->expr;
 
                     curr_expr = new exprNode(curr_operator, left_child_type, left_child, nullptr);
-
-                    num_vertices += 1;
                 } else {
                     // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
                     
@@ -389,8 +398,6 @@ exprNode* parse_expr() {
                     } else {
                         curr_expr = new exprNode(curr_operator, left_child_type, left_child, right_child);
                     }
-
-                    num_vertices += 1;
                 }
 
                 // Create stack node to house the current expre...
@@ -416,7 +423,7 @@ exprNode* parse_expr() {
 }
 
 void parse_variable_access() {
-    expect(ID);
+    expect(ID); // make expr Node
 
     Token t1 = lexer.peek(1);
     Token t2 = lexer.peek(2);
@@ -461,20 +468,6 @@ void parse_stmt_list() {
         } else {
             parse_assign_stmt();
         }
-        
-        if (!has_run_first_statement) {
-            // This will only run for one time (first statement)
-            // Perform BFS printing here (only if every statement has no syntax error)
-            print_abstract_syntax_tree();
-        }
-
-        has_run_first_statement = true;
-
-        // Clear the stack after every statement
-        stack.clear();
-
-        // Reset the vertices count
-        num_vertices = 0;
     }
 }
 
@@ -506,35 +499,7 @@ void parse_array() {
  * Prints the abstract syntax tree using BFS
 */
 void print_abstract_syntax_tree() {
-    // vector<exprNode> visited;
-
-    /*
-    visited.resize(root, false);
- 
-    // Create a queue for BFS
-    list<exprNode> queue;
- 
-    // Mark the current node as visited and enqueue it
-    visited[s] = true;
-    queue.push_back(s);
- 
-    while (!queue.empty()) {
-        // Dequeue a vertex from queue and print it
-        s = queue.front();
-        cout << s << " ";
-        queue.pop_front();
- 
-        // Get all adjacent vertices of the dequeued
-        // vertex s. If a adjacent has not been visited,
-        // then mark it visited and enqueue it
-        for (auto adjecent: adj[s]) {
-            if (!visited[adjecent]) {
-                visited[adjecent] = true;
-                queue.push_back(adjecent);
-            }
-        }
-    }
-    */
+    
 }
 
 // Task 1

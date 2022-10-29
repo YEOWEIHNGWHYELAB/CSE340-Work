@@ -5,6 +5,7 @@ using namespace std;
 
 void syntax_error() {
     cout << "SNYATX EORRR !!!" << endl;
+    exit(1);
 }
 
 void valid_type() {
