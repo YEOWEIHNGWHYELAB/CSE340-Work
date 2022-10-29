@@ -36,6 +36,7 @@ typedef enum {
     MINUS_OPER,
     MULT_OPER,
     DIV_OPER,
+    EQUAL_OPER,
     ARRAY_ELEM_OPER, 
     WHOLE_ARRAY_OPER
 } operatorType;
@@ -81,7 +82,7 @@ struct exprNode {
         } array;
     };
 
-    // ID_OPER OR WHOLE_ARRAY_OPER
+    // ID_OPER
     exprNode(operatorType operator_type, exprNodeType expr_type, string var_name, int line_num) {
         this->curr_operator = operator_type;
         this->type = expr_type;
@@ -92,6 +93,18 @@ struct exprNode {
         } else if (this->curr_operator == WHOLE_ARRAY_OPER) {
             array.arrayName = var_name;
             array.line_no = line_num;
+        } else {
+            syntax_error();
+        }
+    }
+
+    // WHOLE_ARRAY_OPER
+    exprNode(operatorType operator_type, exprNodeType expr_type, exprNode* left_child) {
+        this->curr_operator = operator_type;
+        this->type = expr_type;
+
+        if (this->curr_operator == WHOLE_ARRAY_OPER) {
+            child.left = left_child;
         } else {
             syntax_error();
         }
@@ -118,7 +131,7 @@ void operator_precedence_parsing(stackNode);
 void print_abstract_syntax_tree();
 stackNode stack_peeker_top();
 stackNode stack_peeker();
-void parse_variable_access();
+exprNode* parse_variable_access();
 void parse_assign_stmt();
 void parse_stmt_list();
 void parse_block();

@@ -17,6 +17,9 @@ LexicalAnalyzer lexer;
 vector<stackNode> ast_stack;
 vector<stackNode> stack;
 
+// First statement AST
+stringstream first_ast;
+
 // Scalar & Vector declare list
 vector<Token> scalar_list;
 vector<Token> array_list;
@@ -249,6 +252,7 @@ operatorType operator_type(string curr_rhs) {
     }
 }
 
+// Takes in the variable name and determine if it is SCALAR, ARRAY, ERROR 
 exprNodeType expr_type(string varname) {
     for (auto ii : scalar_list) {
         if (ii.lexeme == varname) 
@@ -400,7 +404,7 @@ exprNode* parse_expr() {
                     }
                 }
 
-                // Create stack node to house the current expre...
+                // Create stack node to house the current expression
                 stackNode* stack_node_expr = new stackNode();
                 stack_node_expr->type = EXPR;
                 stack_node_expr->expr = curr_expr;
@@ -422,23 +426,35 @@ exprNode* parse_expr() {
     return stack.at(1).expr;
 }
 
-void parse_variable_access() {
-    expect(ID); // make expr Node
+exprNode* parse_variable_access() {
+    // Make an expr Node
+    Token id_token = expect(ID);
+    exprNode *id_expr_node = new exprNode(ID_OPER, expr_type(id_token.lexeme), id_token.lexeme, id_token.line_no);
 
     Token t1 = lexer.peek(1);
     Token t2 = lexer.peek(2);
-    
+
     if (t1.token_type == LBRAC && t2.token_type == DOT) {
-        // array access with .
+        // Array access with [.]
         expect(LBRAC);
         expect(DOT);
         expect(RBRAC);
+
+        exprNode* whole_arr_oper_expr = new exprNode(WHOLE_ARRAY_OPER, ARRAY_TYPE, id_expr_node);
+        return whole_arr_oper_expr;
     } else if (t1.token_type == LBRAC) {
-        // array access but not .
+        // Array access [expr]
         expect(LBRAC);
-        root = parse_expr();
+        exprNode* expr_node = parse_expr();
         expect(RBRAC);
+
+        exprNode* arr_element_oper_expr = new exprNode(ARRAY_ELEM_OPER, ARRAY_TYPE, id_expr_node, expr_node);
+        return arr_element_oper_expr;
     }
+    
+
+    // If it is just an ID exprNode
+    return id_expr_node;
 }
 
 void parse_output_stmt() {
@@ -448,21 +464,22 @@ void parse_output_stmt() {
 }
 
 void parse_assign_stmt() {
-    parse_variable_access();
+    exprNode* left_child_expr = parse_variable_access();
 
     // at this point we have parsed the [.] or [expr]
     // or we are dealing with the case ID =
     // in all cases, the next token must be EQUAL
     expect(EQUAL);
-    root = parse_expr();
+    exprNode* right_child_expr = parse_expr();
     expect(SEMICOLON);
+
+    root = new exprNode(EQUAL_OPER, left_child_expr->type, left_child_expr, right_child_expr);
 }
 
 void parse_stmt_list() {
-    bool has_run_first_statement = false;
-
     // Parse Statements 1 statement at a time
     while (peek_symbol().token_type != RBRACE) {
+        // Decide if it is an output or an assign statement
         if (peek_symbol().token_type == OUTPUT) {
             parse_output_stmt();
         } else {
@@ -516,6 +533,9 @@ void parse_and_generate_AST() {
 
     // End of statement parsing
     expect(END_OF_FILE);
+
+    // Only if no error then you can print the ast of first statement
+    // print_abstract_syntax_tree();
 }
 
 // Task 2
