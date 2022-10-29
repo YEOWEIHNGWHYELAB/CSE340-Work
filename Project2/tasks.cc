@@ -12,6 +12,7 @@ using namespace std;
 
 // Note that the stack is where you build the AST!
 LexicalAnalyzer lexer;
+
 vector<stackNode> stack;
 
 // Scalar & Vector declare list
@@ -281,7 +282,7 @@ exprNode* parse_expr() {
     // Peek top terminal of stack
     stackNode curr_stack_term_top = stack_peeker();
 
-    // If $ is on top of the stack and lexer.peek();
+    // If $ is on top of the stack and peek_symbol();
     while (!((curr_stack_term_top.term->token_type == END_OF_FILE) && (curr_input_token.token_type == END_OF_FILE))) {
         /**
          * curr_stack_term_top is the current term on top or just below top of stack while
@@ -414,34 +415,11 @@ exprNode* parse_expr() {
     return stack.at(1).expr;
 }
 
-void parse_output_stmt() {
-    expect(OUTPUT);
-    expect(ID);
-
-    if (peek_symbol().token_type == LBRAC) {
-        expect(LBRAC);
-
-        // Check if there's is need to do operator precedence parsing
-        if (peek_symbol().token_type == DOT) {
-            expect(DOT);
-        } else {
-            root = parse_expr();
-        }
-        
-        expect(RBRAC);
-    }
-
-    expect(SEMICOLON);
-}
-
-void parse_assign_stmt() {
+void parse_variable_access() {
     expect(ID);
 
     Token t1 = lexer.peek(1);
     Token t2 = lexer.peek(2);
-
-    cout << t1.lexeme << endl;
-    cout << t2.lexeme << endl;
     
     if (t1.token_type == LBRAC && t2.token_type == DOT) {
         // array access with .
@@ -454,6 +432,16 @@ void parse_assign_stmt() {
         root = parse_expr();
         expect(RBRAC);
     }
+}
+
+void parse_output_stmt() {
+    expect(OUTPUT);
+    parse_variable_access();
+    expect(SEMICOLON);
+}
+
+void parse_assign_stmt() {
+    parse_variable_access();
 
     // at this point we have parsed the [.] or [expr]
     // or we are dealing with the case ID =
@@ -490,7 +478,6 @@ void parse_stmt_list() {
     }
 }
 
-// Issue 
 void parse_block() {
     expect(LBRACE);
     parse_stmt_list();
