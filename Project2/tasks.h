@@ -118,8 +118,10 @@ struct exprNode {
 
 string reverse_rhs_builder(vector<stackNode>);
 void duplicate_token(stackNode, Token);
+void duplicate_stack_node(stackNode, stackNode);
 exprNode* parse_expr();
 void operator_precedence_parsing(stackNode);
+void expr_node_printer(exprNode* curr_expr);
 void print_abstract_syntax_tree();
 stackNode stack_peeker_top();
 stackNode stack_peeker();

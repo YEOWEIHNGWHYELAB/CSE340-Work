@@ -7,6 +7,7 @@
 #include "execute.h"
 #include "tasks.h"
 #include "error.h"
+#include <queue>
 
 using namespace std;
 
@@ -76,6 +77,18 @@ string valid_rhs[9] = {
     "NUM"
 };
 
+string expr_string[9] = {
+    "ID",
+    "NUM", 
+    "+", 
+    "-",
+    "*",
+    "/",
+    "=",
+    "[]", 
+    "[.]"
+};
+
 // Initailize the map that maps token type index to the correct index precedence table 
 void initialize_map() {
     map_tokentype_indextable.insert(pair<int, int>(PLUS, 0));
@@ -140,11 +153,12 @@ Token peek_symbol() {
  * Returns the stackNode of type terminal closest to the top of stack or
  * just below top of stack
 */
-stackNode stack_peeker() {
+stackNode stack_peeker() {    
     vector<stackNode>::iterator stack_peeker = stack.end();
 
     if (stack_peeker->type == TERM) {
         // If the top is a TERM
+        // stack_peeker->term->Print();
         return *stack_peeker;
     } else {
         // If top is not a TERM, peek below by one on the stack 
@@ -152,14 +166,12 @@ stackNode stack_peeker() {
 
         // Check if the element below the top of the stack is stack
         if (stack_peeker->type == TERM) {
+            // stack_peeker->term->Print();
             return *stack_peeker;
         } else {
             syntax_error();
-            return *stack_peeker;
         }
     }
-
-    return *stack_peeker;
 }
 
 // Reverses the stackNodes built from the RHS Stack and return a string of RHS
@@ -220,6 +232,32 @@ void duplicate_token(stackNode src, Token dest) {
     dest.lexeme = src.term->lexeme;
     dest.line_no = src.term->line_no;
     dest.token_type = src.term->token_type;
+}
+
+// Duplicate stackNode
+void duplicate_stack_node(stackNode src, stackNode dest) {
+    if (src.type == TERM) {
+        dest.type = TERM;
+        dest.term->lexeme = src.term->lexeme;
+        dest.term->line_no = src.term->line_no;
+        dest.term->token_type = src.term->token_type;
+    } else {
+        dest.type = EXPR;
+        operatorType operator_type = src.expr->curr_operator;
+        dest.expr->curr_operator = operator_type;
+        dest.expr->type = src.expr->type;
+
+        if (operator_type == PLUS_OPER || operator_type == MINUS_OPER || operator_type == DIV_OPER || operator_type == MULT_OPER || operator_type == EQUAL_OPER || operator_type == ARRAY_ELEM_OPER) {
+            dest.expr->child.left = src.expr->child.left;
+            dest.expr->child.right = src.expr->child.right;
+        } else if (operator_type == WHOLE_ARRAY_OPER) {
+            dest.expr->child.left = src.expr->child.left;
+            dest.expr->child.right = nullptr;
+        } else if (operator_type == NUM_OPER || operator_type == ID_OPER) {
+            dest.expr->id.varName = src.expr->id.varName;
+            dest.expr->id.line_no = src.expr->id.line_no;
+        }
+    }
 }
 
 // Check if the current rhs to match is valid
@@ -319,16 +357,21 @@ exprNode* parse_expr() {
         int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
         int b = map_tokentype_indextable[curr_input_token.token_type];
 
+        cout << a << endl;
+        cout << b << endl;
+
         if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
             // Shift
-
+            
             // Get token from input first
             Token t = get_symbol();
 
             // Build the stack node from token
             stackNode t_stack_node;
             t_stack_node.type = TERM;
-            t_stack_node.term = &t; 
+            t_stack_node.term->lexeme = t.lexeme;
+            t_stack_node.term->line_no = t.line_no;
+            t_stack_node.term->token_type = t.token_type;
 
             // Push to stack
             stack.push_back(t_stack_node);
@@ -353,15 +396,18 @@ exprNode* parse_expr() {
                 }
                 
                 // Push stackNode into RHS
+                stackNode newTop;
+                duplicate_stack_node(curr_top, newTop);
                 curr_rhs.push_back(curr_top);
 
                 // pop_back just delete last element without returning it
                 stack.pop_back();
             }
-            while (!(stack.end()->type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
+            while (!(stack_peeker_top().type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
 
             // Get the RHS string
             string curr_rhs_str = reverse_rhs_builder(curr_rhs);
+            // cout << curr_rhs_str << endl;
             
             // RHS calculated above
             if (rhs_match(curr_rhs_str)) {
@@ -514,15 +560,28 @@ void parse_array() {
     }
 }
 
-void expr_node_printer() {
-
+void expr_node_printer(exprNode* curr_expr) {
+    operatorType curr_operator_type = curr_expr->curr_operator;
+    // first_ast
 }
 
 /**
  * Prints the abstract syntax tree using BFS
 */
 void print_abstract_syntax_tree() {
-    
+    queue<exprNode*> q;
+    q.push(root);
+
+    while (q.empty() == false) {
+      exprNode *curr_expr = q.front();
+      expr_node_printer(curr_expr);
+      q.pop();
+      
+      if (curr_expr->child.left != NULL)
+         q.push(curr_expr->child.left);
+      if (curr_expr->child.right != NULL)
+         q.push(curr_expr->child.right);
+   }
 }
 
 // Task 1
