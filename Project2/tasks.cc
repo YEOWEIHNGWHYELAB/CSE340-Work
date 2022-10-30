@@ -29,7 +29,7 @@ vector<Token> array_list;
 exprNode* root;
 
 // Index based Operator Precedence Table
-map<int, int> map_tokentype_indextable;
+map<TokenType, int> map_tokentype_indextable;
 
 // Used to map to operatorValue
 string symbolMap[12] = {
@@ -91,18 +91,18 @@ string expr_string[9] = {
 
 // Initailize the map that maps token type index to the correct index precedence table 
 void initialize_map() {
-    map_tokentype_indextable.insert(pair<int, int>(PLUS, 0));
-    map_tokentype_indextable.insert(pair<int, int>(MINUS, 1));
-    map_tokentype_indextable.insert(pair<int, int>(MULT, 2));
-    map_tokentype_indextable.insert(pair<int, int>(DIV, 3));
-    map_tokentype_indextable.insert(pair<int, int>(LPAREN, 4));
-    map_tokentype_indextable.insert(pair<int, int>(RPAREN, 5));
-    map_tokentype_indextable.insert(pair<int, int>(LBRAC, 6));
-    map_tokentype_indextable.insert(pair<int, int>(DOT, 7));
-    map_tokentype_indextable.insert(pair<int, int>(RBRAC, 8));
-    map_tokentype_indextable.insert(pair<int, int>(NUM, 9));
-    map_tokentype_indextable.insert(pair<int, int>(ID, 10));
-    map_tokentype_indextable.insert(pair<int, int>(END_OF_FILE, 11));
+    map_tokentype_indextable.insert(pair<TokenType, int>(PLUS, 0));
+    map_tokentype_indextable.insert(pair<TokenType, int>(MINUS, 1));
+    map_tokentype_indextable.insert(pair<TokenType, int>(MULT, 2));
+    map_tokentype_indextable.insert(pair<TokenType, int>(DIV, 3));
+    map_tokentype_indextable.insert(pair<TokenType, int>(LPAREN, 4));
+    map_tokentype_indextable.insert(pair<TokenType, int>(RPAREN, 5));
+    map_tokentype_indextable.insert(pair<TokenType, int>(LBRAC, 6));
+    map_tokentype_indextable.insert(pair<TokenType, int>(DOT, 7));
+    map_tokentype_indextable.insert(pair<TokenType, int>(RBRAC, 8));
+    map_tokentype_indextable.insert(pair<TokenType, int>(NUM, 9));
+    map_tokentype_indextable.insert(pair<TokenType, int>(ID, 10));
+    map_tokentype_indextable.insert(pair<TokenType, int>(END_OF_FILE, 11));
 }
 
 Token expect(TokenType expected_type) {
@@ -327,24 +327,21 @@ exprNode* parse_expr() {
 
     // Peek current input token
     Token curr_input_token = peek_symbol();
-    
-    // End of expression token
-    Token eoe_tok;
-    eoe_tok.lexeme = "$";
-    eoe_tok.token_type = END_OF_FILE;
-    eoe_tok.line_no = curr_input_token.line_no;
+    curr_input_token.Print();
 
     // Initialize stack with a EOE first
     stackNode eoe_node;
     eoe_node.type = TERM;
-    eoe_node.term = &eoe_tok;
+    eoe_node.term->lexeme = "$";
+    eoe_node.term->token_type = END_OF_FILE;
+    eoe_node.term->line_no = curr_input_token.line_no;
     stack.push_back(eoe_node);
 
     // Peek top terminal of stack
     stackNode curr_stack_term_top = stack_peeker();
 
     // If $ is on top of the stack and peek_symbol();
-    while (!((curr_stack_term_top.term->token_type == END_OF_FILE) && (curr_input_token.token_type == END_OF_FILE))) {
+    while (!((curr_stack_term_top.term->token_type == END_OF_FILE) && (peek_symbol().token_type == END_OF_FILE))) {
         /**
          * curr_stack_term_top is the current term on top or just below top of stack while
          * curr_input_token is the current input token
@@ -360,11 +357,28 @@ exprNode* parse_expr() {
         cout << a << endl;
         cout << b << endl;
 
+        /*
+        if (precedence_table[a][b] == PREC_LESS) {
+            cout << "LESS!" << endl;
+        } else if (precedence_table[a][b] == PREC_EQUAL) {
+            cout << "EQUAL!" << endl;
+        } else if (precedence_table[a][b] == PREC_GREATER) {
+            cout << "GREATER!" << endl;
+        } else if (precedence_table[a][b] == PREC_ERR) {
+            cout << "ERROR!" << endl;
+        } else if (precedence_table[a][b] == PREC_ACCEPT) {
+            cout << "ACCEPT!" << endl;
+        } else {
+            cout << "UNKNOWN!" << endl;
+        }
+        */
+
         if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
             // Shift
             
             // Get token from input first
             Token t = get_symbol();
+            // t.Print();
 
             // Build the stack node from token
             stackNode t_stack_node;
