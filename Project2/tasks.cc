@@ -155,8 +155,11 @@ stackNode stack_peeker() {
             return *stack_peeker;
         } else {
             syntax_error();
+            return *stack_peeker;
         }
     }
+
+    return *stack_peeker;
 }
 
 // Reverses the stackNodes built from the RHS Stack and return a string of RHS
@@ -281,19 +284,22 @@ exprNodeType expr_type(string varname) {
  *      3. Build the abstract syntax tree after the reduction
 */
 exprNode* parse_expr() {
+    // Ensure stack is cleared first!
+    stack.clear();
+
     // Peek current input token
     Token curr_input_token = peek_symbol();
-
-    // Initialize stack with a EOE first
-    stack.clear();
-    stackNode eoe_node;
-    eoe_node.type = TERM;
+    
+    // End of expression token
     Token eoe_tok;
     eoe_tok.lexeme = "$";
     eoe_tok.token_type = END_OF_FILE;
     eoe_tok.line_no = curr_input_token.line_no;
+
+    // Initialize stack with a EOE first
+    stackNode eoe_node;
+    eoe_node.type = TERM;
     eoe_node.term = &eoe_tok;
-    
     stack.push_back(eoe_node);
 
     // Peek top terminal of stack
@@ -332,15 +338,12 @@ exprNode* parse_expr() {
             // Stack to store all the stackNode from the current RHS
             vector<stackNode> curr_rhs;
 
-            // 
-            Token* last_popped_term;
+            // Store last pop term and the current top of stack
+            Token* last_popped_term = new Token();
             stackNode curr_top;
 
             // Pop until the top of the stack is a term and the operator precedence become less than
             do {
-                // Store the last pop term
-                last_popped_term = new Token();
-
                 // Peek the top of stack
                 curr_top = stack_peeker_top();
 
@@ -374,7 +377,7 @@ exprNode* parse_expr() {
 
                 // Determine the kind of exprNode to build
                 if (curr_operator == ID_OPER || curr_operator == NUM_OPER) {
-                    // ID_OPER OR WHOLE_ARRAY_OPER
+                    // ID_OPER OR NUM_OPER
                     exprNodeType curr_expr_type = expr_type(curr_rhs_it->term->lexeme);
 
                     curr_expr = new exprNode(curr_operator, curr_expr_type, curr_rhs_it->term->lexeme, curr_rhs_it->term->line_no);
@@ -429,8 +432,8 @@ exprNode* parse_expr() {
 exprNode* parse_variable_access() {
     // Make an expr Node
     Token id_token = expect(ID);
-    exprNode *id_expr_node = new exprNode(ID_OPER, expr_type(id_token.lexeme), id_token.lexeme, id_token.line_no);
-
+    exprNode* id_expr_node = new exprNode(ID_OPER, expr_type(id_token.lexeme), id_token.lexeme, id_token.line_no);
+    
     Token t1 = lexer.peek(1);
     Token t2 = lexer.peek(2);
 
@@ -451,7 +454,6 @@ exprNode* parse_variable_access() {
         exprNode* arr_element_oper_expr = new exprNode(ARRAY_ELEM_OPER, ARRAY_TYPE, id_expr_node, expr_node);
         return arr_element_oper_expr;
     }
-    
 
     // If it is just an ID exprNode
     return id_expr_node;
@@ -459,7 +461,7 @@ exprNode* parse_variable_access() {
 
 void parse_output_stmt() {
     expect(OUTPUT);
-    parse_variable_access();
+    exprNode* outputexpr = parse_variable_access();
     expect(SEMICOLON);
 }
 
@@ -508,8 +510,12 @@ void parse_array() {
 
     while (peek_symbol().token_type != LBRACE) {
         Token curr_var = expect(ID);
-        scalar_list.push_back(curr_var);
+        array_list.push_back(curr_var);
     }
+}
+
+void expr_node_printer() {
+
 }
 
 /**

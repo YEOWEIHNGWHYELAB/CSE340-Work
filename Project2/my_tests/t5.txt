@@ -1,0 +1,5 @@
+SCALAR x y z
+ARRAY a b c
+{
+y = 1+x-z[2];
+}

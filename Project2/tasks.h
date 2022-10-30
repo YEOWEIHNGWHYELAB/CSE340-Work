@@ -63,36 +63,27 @@ struct exprNode {
     
     // these types are discussed later under type checking
     union {
-        // operator = ID_OPER
+        // operator = ID_OPER or NUM_OPER
         struct {
             string varName;
             int line_no;
         } id;
 
-        // operator = PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET or ARRAY_ELEM_OPER
+        // operator = EQUAL_OPER, PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET, ARRAY_ELEM_OPER or WHOLE_ARRAY_OPER
         struct {
             struct exprNode *left;
             struct exprNode *right;
         } child;
-
-        // operator = WHOLE_ARRAY_OPER
-        struct { 
-            string arrayName;
-            int line_no;
-        } array;
     };
 
-    // ID_OPER
+    // ID_OPER OR NUM OPERATOR
     exprNode(operatorType operator_type, exprNodeType expr_type, string var_name, int line_num) {
         this->curr_operator = operator_type;
         this->type = expr_type;
 
-        if (this->curr_operator == ID_OPER) {
+        if (operator_type == ID_OPER || operator_type == NUM_OPER) {
             id.varName = var_name;
             id.line_no = line_num;
-        } else if (this->curr_operator == WHOLE_ARRAY_OPER) {
-            array.arrayName = var_name;
-            array.line_no = line_num;
         } else {
             syntax_error();
         }
@@ -103,19 +94,20 @@ struct exprNode {
         this->curr_operator = operator_type;
         this->type = expr_type;
 
-        if (this->curr_operator == WHOLE_ARRAY_OPER) {
+        if (operator_type == WHOLE_ARRAY_OPER) {
             child.left = left_child;
+            child.right = nullptr;
         } else {
             syntax_error();
         }
     }
 
-    // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
+    // EQUAL_OPER, PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
     exprNode(operatorType operator_type, exprNodeType expr_type, exprNode* left_child, exprNode* right_child) {
         this->curr_operator = operator_type;
         this->type = expr_type;
 
-        if (this->curr_operator == PLUS_OPER || this->curr_operator == MINUS_OPER || this->curr_operator == DIV_OPER || this->curr_operator == MULT_OPER || this->curr_operator == ARRAY_ELEM_OPER) {
+        if (operator_type == PLUS_OPER || operator_type == MINUS_OPER || operator_type == DIV_OPER || operator_type == MULT_OPER || operator_type == EQUAL_OPER || operator_type == ARRAY_ELEM_OPER) {
             child.left = left_child;
             child.right = right_child;
         } else {
