@@ -327,15 +327,18 @@ exprNode* parse_expr() {
 
     // Peek current input token
     Token curr_input_token = peek_symbol();
-    curr_input_token.Print();
+    
+    // End of expression token
+    Token* eoe_tok = new Token();
+    eoe_tok->lexeme = "$";
+    eoe_tok->token_type = END_OF_FILE;
+    eoe_tok->line_no = curr_input_token.line_no;
 
     // Initialize stack with a EOE first
-    stackNode eoe_node;
-    eoe_node.type = TERM;
-    eoe_node.term->lexeme = "$";
-    eoe_node.term->token_type = END_OF_FILE;
-    eoe_node.term->line_no = curr_input_token.line_no;
-    stack.push_back(eoe_node);
+    stackNode* eoe_node = new stackNode();
+    eoe_node->type = TERM;
+    eoe_node->term = eoe_tok;
+    stack.push_back(*eoe_node);
 
     // Peek top terminal of stack
     stackNode curr_stack_term_top = stack_peeker();
@@ -354,8 +357,8 @@ exprNode* parse_expr() {
         int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
         int b = map_tokentype_indextable[curr_input_token.token_type];
 
-        cout << a << endl;
-        cout << b << endl;
+        // cout << a << endl;
+        // cout << b << endl;
 
         /*
         if (precedence_table[a][b] == PREC_LESS) {
@@ -381,14 +384,16 @@ exprNode* parse_expr() {
             // t.Print();
 
             // Build the stack node from token
-            stackNode t_stack_node;
-            t_stack_node.type = TERM;
-            t_stack_node.term->lexeme = t.lexeme;
-            t_stack_node.term->line_no = t.line_no;
-            t_stack_node.term->token_type = t.token_type;
+            stackNode* t_stack_node = new stackNode();
+            t_stack_node->term->lexeme = t.lexeme;
+            t_stack_node->term->line_no = t.line_no;
+            t_stack_node->term->token_type = t.token_type;
+            t_stack_node->type = TERM;
+
+            t_stack_node->term->Print();
 
             // Push to stack
-            stack.push_back(t_stack_node);
+            stack.push_back(*t_stack_node);
         } else if (precedence_table[a][b] == PREC_GREATER) {
             // Reduce
             
@@ -576,7 +581,14 @@ void parse_array() {
 
 void expr_node_printer(exprNode* curr_expr) {
     operatorType curr_operator_type = curr_expr->curr_operator;
-    // first_ast
+
+    if (curr_operator_type == ID_OPER || curr_operator_type == NUM_OPER) {
+        first_ast << expr_string[(int)curr_operator_type] + "\"";
+        first_ast << curr_expr->id.varName;
+        first_ast << "\" ";
+    } else {
+        first_ast << expr_string[(int)curr_operator_type] + " ";
+    }
 }
 
 /**
@@ -614,7 +626,7 @@ void parse_and_generate_AST() {
     expect(END_OF_FILE);
 
     // Only if no error then you can print the ast of first statement
-    // print_abstract_syntax_tree();
+    cout << first_ast.str() << endl;
 }
 
 // Task 2
