@@ -365,8 +365,8 @@ exprNode* parse_expr() {
         int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
         int b = map_tokentype_indextable[curr_input_token.token_type];
 
-        cout << a << endl;
-        cout << b << endl;
+        //cout << a << endl;
+        //cout << b << endl;
 
         if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
             // Shift
@@ -391,21 +391,28 @@ exprNode* parse_expr() {
         } else if (precedence_table[a][b] == PREC_GREATER) {
             // Reduce
             
+            for (auto i = stack.begin(); i != stack.end(); i++) {
+                if (i->type == TERM)
+                    i->term->Print();
+            }
+            
+            
             // Stack to store all the stackNode from the current RHS
             vector<stackNode> curr_rhs;
 
             // Store last pop term and the current top of stack
             Token* last_popped_term = new Token();
-            stackNode curr_top;
 
             // Pop until the top of the stack is a term and the operator precedence become less than
             do {
                 // Peek the top of stack
-                curr_top = stack_peeker_top();
+                stackNode curr_top = stack_peeker_top();
 
                 // Change the last popped token
                 if (curr_top.type == TERM) {
-                    duplicate_token(curr_top, *last_popped_term);
+                    last_popped_term->lexeme = curr_top.term->lexeme;
+                    last_popped_term->token_type = curr_top.term->token_type;
+                    last_popped_term->line_no = curr_top.term->line_no;
                 }
                 
                 // Push stackNode into RHS
