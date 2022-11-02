@@ -365,8 +365,8 @@ exprNode* parse_expr() {
         int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
         int b = map_tokentype_indextable[curr_input_token.token_type];
 
-        //cout << a << endl;
-        //cout << b << endl;
+        // cout << a << endl;
+        // cout << b << endl;
 
         if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
             // Shift
@@ -390,12 +390,12 @@ exprNode* parse_expr() {
             stack.push_back(*t_stack_node);
         } else if (precedence_table[a][b] == PREC_GREATER) {
             // Reduce
-            
+            /*
             for (auto i = stack.begin(); i != stack.end(); i++) {
                 if (i->type == TERM)
                     i->term->Print();
             }
-            
+            */
             
             // Stack to store all the stackNode from the current RHS
             vector<stackNode> curr_rhs;
@@ -425,6 +425,7 @@ exprNode* parse_expr() {
 
             // Get the RHS string
             string curr_rhs_str = reverse_rhs_builder(curr_rhs);
+            // cout << curr_rhs_str << endl;
             
             // RHS calculated above
             if (rhs_match(curr_rhs_str)) {
@@ -542,6 +543,7 @@ void parse_assign_stmt() {
 }
 
 void parse_stmt_list() {
+    bool has_ran_once = false;
     // Parse Statements 1 statement at a time
     while (peek_symbol().token_type != RBRACE) {
         // Decide if it is an output or an assign statement
@@ -549,6 +551,11 @@ void parse_stmt_list() {
             parse_output_stmt();
         } else {
             parse_assign_stmt();
+        }
+
+        if (!has_ran_once) {
+            print_abstract_syntax_tree();
+            has_ran_once = true;
         }
     }
 }
