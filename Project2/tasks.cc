@@ -153,21 +153,22 @@ Token peek_symbol() {
  * Returns the stackNode of type terminal closest to the top of stack or
  * just below top of stack
 */
-stackNode stack_peeker() {    
-    vector<stackNode>::iterator stack_peeker = stack.end();
+stackNode stack_peeker() {
+    int stack_len = stack.size();    
+    stackNode stack_peeker = stack[stack_len - 1];
 
-    if (stack_peeker->type == TERM) {
+    if (stack_peeker.type == TERM) {
         // If the top is a TERM
         // stack_peeker->term->Print();
-        return *stack_peeker;
+        return stack_peeker;
     } else {
         // If top is not a TERM, peek below by one on the stack 
-        stack_peeker -= 1;
+        stack_peeker = stack[stack_len - 2];
 
         // Check if the element below the top of the stack is stack
-        if (stack_peeker->type == TERM) {
+        if (stack_peeker.type == TERM) {
             // stack_peeker->term->Print();
-            return *stack_peeker;
+            return stack_peeker;
         } else {
             syntax_error();
         }
@@ -178,7 +179,7 @@ stackNode stack_peeker() {
 string reverse_rhs_builder(vector<stackNode> rhs_stack) {
     stringstream rhs_string_stream;
 
-    for (auto curr_stackNode = rhs_stack.end(); curr_stackNode >= rhs_stack.begin(); curr_stackNode--) {
+    for (auto curr_stackNode = rhs_stack.rbegin(); curr_stackNode != rhs_stack.rend(); curr_stackNode++) {
         if (curr_stackNode->type == TERM) {
             if (curr_stackNode->term->token_type == PLUS) {
                 string expr_str = "+";
@@ -224,7 +225,7 @@ string reverse_rhs_builder(vector<stackNode> rhs_stack) {
 
 // Peek only the top stackNode of the stack
 stackNode stack_peeker_top() {
-    return *stack.end();
+    return stack[stack.size() - 1];
 }
 
 // Duplicate the token
@@ -238,24 +239,26 @@ void duplicate_token(stackNode src, Token dest) {
 void duplicate_stack_node(stackNode src, stackNode dest) {
     if (src.type == TERM) {
         dest.type = TERM;
-        dest.term->lexeme = src.term->lexeme;
-        dest.term->line_no = src.term->line_no;
-        dest.term->token_type = src.term->token_type;
+        Token temp;
+        temp.lexeme = src.term->lexeme;
+        temp.line_no = src.term->line_no;
+        temp.token_type = src.term->token_type;
+        dest.term = &temp;
     } else {
         dest.type = EXPR;
         operatorType operator_type = src.expr->curr_operator;
-        dest.expr->curr_operator = operator_type;
-        dest.expr->type = src.expr->type;
 
         if (operator_type == PLUS_OPER || operator_type == MINUS_OPER || operator_type == DIV_OPER || operator_type == MULT_OPER || operator_type == EQUAL_OPER || operator_type == ARRAY_ELEM_OPER) {
-            dest.expr->child.left = src.expr->child.left;
-            dest.expr->child.right = src.expr->child.right;
+            exprNode* exprtemp = new exprNode(src.expr->curr_operator, src.expr->type, src.expr->child.left, src.expr->child.right);
+            dest.expr = exprtemp;
         } else if (operator_type == WHOLE_ARRAY_OPER) {
-            dest.expr->child.left = src.expr->child.left;
-            dest.expr->child.right = nullptr;
+            exprNode* exprtemp = new exprNode(src.expr->curr_operator, src.expr->type, src.expr->child.left);
+            dest.expr = exprtemp;
         } else if (operator_type == NUM_OPER || operator_type == ID_OPER) {
-            dest.expr->id.varName = src.expr->id.varName;
-            dest.expr->id.line_no = src.expr->id.line_no;
+            exprNode* exprtemp = new exprNode(src.expr->curr_operator, src.expr->type, src.expr->id.varName, src.expr->id.line_no);
+            dest.expr = exprtemp;
+        } else {
+            syntax_error();
         }
     }
 }
@@ -345,6 +348,11 @@ exprNode* parse_expr() {
 
     // If $ is on top of the stack and peek_symbol();
     while (!((curr_stack_term_top.term->token_type == END_OF_FILE) && (peek_symbol().token_type == END_OF_FILE))) {
+        /*
+        for (auto i = stack.begin(); i != stack.end(); i++) {
+            i->term->Print();
+        }
+        */
         /**
          * curr_stack_term_top is the current term on top or just below top of stack while
          * curr_input_token is the current input token
@@ -357,24 +365,8 @@ exprNode* parse_expr() {
         int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
         int b = map_tokentype_indextable[curr_input_token.token_type];
 
-        // cout << a << endl;
-        // cout << b << endl;
-
-        /*
-        if (precedence_table[a][b] == PREC_LESS) {
-            cout << "LESS!" << endl;
-        } else if (precedence_table[a][b] == PREC_EQUAL) {
-            cout << "EQUAL!" << endl;
-        } else if (precedence_table[a][b] == PREC_GREATER) {
-            cout << "GREATER!" << endl;
-        } else if (precedence_table[a][b] == PREC_ERR) {
-            cout << "ERROR!" << endl;
-        } else if (precedence_table[a][b] == PREC_ACCEPT) {
-            cout << "ACCEPT!" << endl;
-        } else {
-            cout << "UNKNOWN!" << endl;
-        }
-        */
+        cout << a << endl;
+        cout << b << endl;
 
         if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
             // Shift
@@ -387,12 +379,11 @@ exprNode* parse_expr() {
             // You need to allocate memory for the term pointer otherwise 
             // it will seg fault if you directly assign it with values 
             stackNode* t_stack_node = new stackNode();
-            Token temp;
-            temp.lexeme = t.lexeme;
-            temp.line_no = t.line_no;
-            temp.token_type = t.token_type;
-            t_stack_node->term = &temp;
             t_stack_node->type = TERM;
+            t_stack_node->term = new Token();
+            t_stack_node->term->lexeme = t.lexeme;
+            t_stack_node->term->line_no = t.line_no;
+            t_stack_node->term->token_type = t.token_type;
             // t_stack_node->term->Print();
 
             // Push to stack
@@ -418,18 +409,15 @@ exprNode* parse_expr() {
                 }
                 
                 // Push stackNode into RHS
-                stackNode newTop;
-                duplicate_stack_node(curr_top, newTop);
                 curr_rhs.push_back(curr_top);
 
                 // pop_back just delete last element without returning it
                 stack.pop_back();
             }
-            while (!(stack_peeker_top().type == TERM && precedence_table[stack_peeker().term->token_type][last_popped_term->token_type] == PREC_LESS));
+            while (!(stack_peeker_top().type == TERM && precedence_table[map_tokentype_indextable[stack_peeker().term->token_type]][map_tokentype_indextable[last_popped_term->token_type]] == PREC_LESS));
 
             // Get the RHS string
             string curr_rhs_str = reverse_rhs_builder(curr_rhs);
-            // cout << curr_rhs_str << endl;
             
             // RHS calculated above
             if (rhs_match(curr_rhs_str)) {
@@ -439,33 +427,33 @@ exprNode* parse_expr() {
                 // We can think of curr_expr as the root of subtree for curr_expr -> RHS
                 exprNode* curr_expr;
 
-                auto curr_rhs_it = curr_rhs.end();
+                stackNode curr_rhs_it = curr_rhs[curr_rhs.size() - 1];
 
                 // Reduction part is done below
 
                 // Determine the kind of exprNode to build
                 if (curr_operator == ID_OPER || curr_operator == NUM_OPER) {
                     // ID_OPER OR NUM_OPER
-                    exprNodeType curr_expr_type = expr_type(curr_rhs_it->term->lexeme);
+                    exprNodeType curr_expr_type = expr_type(curr_rhs_it.term->lexeme);
 
-                    curr_expr = new exprNode(curr_operator, curr_expr_type, curr_rhs_it->term->lexeme, curr_rhs_it->term->line_no);
+                    curr_expr = new exprNode(curr_operator, curr_expr_type, curr_rhs_it.term->lexeme, curr_rhs_it.term->line_no);
                 } else if (curr_operator == WHOLE_ARRAY_OPER) {
                     // WHOLE_ARRAY_OPER
-                    exprNodeType left_child_type = curr_rhs_it->expr->type;
-                    exprNode* left_child = curr_rhs_it->expr;
+                    exprNodeType left_child_type = curr_rhs_it.expr->type;
+                    exprNode* left_child = curr_rhs_it.expr;
 
                     curr_expr = new exprNode(curr_operator, left_child_type, left_child, nullptr);
                 } else {
                     // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPET OR ARRAY_ELEM_OPER
                     
                     // First expression
-                    exprNodeType left_child_type = curr_rhs_it->expr->type;
-                    exprNode* left_child = curr_rhs_it->expr;
+                    exprNodeType left_child_type = curr_rhs_it.expr->type;
+                    exprNode* left_child = curr_rhs_it.expr;
 
                     // Second expression
-                    curr_rhs_it -= 2;
-                    exprNodeType right_child_type = curr_rhs_it->expr->type;
-                    exprNode* right_child = curr_rhs_it->expr;
+                    curr_rhs_it = curr_rhs[curr_rhs.size() - 3];
+                    exprNodeType right_child_type = curr_rhs_it.expr->type;
+                    exprNode* right_child = curr_rhs_it.expr;
 
                     // Type of new node
                     if (right_child_type != left_child_type) {
