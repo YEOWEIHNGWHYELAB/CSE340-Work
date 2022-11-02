@@ -1,0 +1,189 @@
+whyelab@WHYELABTDL:/mnt/d/Documents/UniFun/AY2022&2023Sem1/ASU/CSE340/Work/Project2$ ./test.sh 1
+Do you want to compile? Y/N Y
+
+Compilation Initialized!
+tasks.cc: In function ‘void parse_output_stmt()’:
+tasks.cc:529:15: warning: unused variable ‘outputexpr’ [-Wunused-variable]
+  529 |     exprNode* outputexpr = parse_variable_access();
+      |               ^~~~~~~~~~
+tasks.cc: In function ‘stackNode stack_peeker()’:
+tasks.cc:175:1: warning: control reaches end of non-void function [-Wreturn-type]
+  175 | }
+      | ^
+tasks.cc: In function ‘operatorType operator_type(std::string)’:
+tasks.cc:294:1: warning: control reaches end of non-void function [-Wreturn-type]
+  294 | }
+      | ^
+----------------------
+Successfully Compiled!
+./test.sh: line 82:   265 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t1: Output does not match expected:
+--------------------------------------------------------
+1d0
+< SNYATX EORRR !!!
+\ No newline at end of file
+========================================================
+./test.sh: line 82:   273 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t10: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = [.] + ID "a" * * ID "x" ID "y" ID "y" ID "z"
+========================================================
+./test.sh: line 82:   281 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t2: Output does not match expected:
+--------------------------------------------------------
+1d0
+< SNYATX EORRR !!!
+\ No newline at end of file
+========================================================
+./test.sh: line 82:   289 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t3: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = ID "y" + NUM "1" ID "x"
+\ No newline at end of file
+========================================================
+./test.sh: line 82:   297 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t4: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = ID "y" + NUM "1" [] ID "a" NUM "2"
+\ No newline at end of file
+========================================================
+./test.sh: line 82:   305 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t5: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = [] + ID "a" NUM "3" NUM "1" ID "x"
+========================================================
+./test.sh: line 82:   313 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t6: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = ID "x" * * [.] [.] [.] ID "b" ID "a" ID "b"
+========================================================
+./test.sh: line 82:   321 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t7: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = ID "x" * [.] [.] ID "a" ID "b"
+========================================================
+./test.sh: line 82:   329 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t8: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = [] / ID "a" ID "x" [.] [.] ID "a" ID "b"
+========================================================
+./test.sh: line 82:   337 Segmentation fault      ./a.out ${task_num} < ${test_file} > ${output_file}
+
+t9: Output does not match expected:
+--------------------------------------------------------
+1d0
+< = ID "x" + [] [] ID "a" ID "x" ID "z" ID "x"
+========================================================
+
+Passed 0 tests out of 10
+
+whyelab@WHYELABTDL:/mnt/d/Documents/UniFun/AY2022&2023Sem1/ASU/CSE340/Work/Project2$ gdb ./a.out 
+GNU gdb (Ubuntu 9.2-0ubuntu1~20.04.1) 9.2
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+--Type <RET> for more, q to quit, c to continue without paging--
+Reading symbols from ./a.out...
+(gdb) start 1 < provided_tests/t1.txt
+Temporary breakpoint 1 at 0x2779: file project2.cc, line 15.
+Starting program: /mnt/d/Documents/UniFun/AY2022&2023Sem1/ASU/CSE340/Work/Project2/a.out 1 < provided_tests/t1.txt
+
+Temporary breakpoint 1, main (argc=21845, argv=0x0) at project2.cc:15
+15      int main (int argc, char* argv[]) {
+(gdb) continue
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff7f1e215 in std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_assign(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) () from /lib/x86_64-linux-gnu/libstdc++.so.6 
+(gdb) b tasks.cc:325
+Breakpoint 2 at 0x555555557ead: file tasks.cc, line 326.
+(gdb) b tasks.cc:336
+Breakpoint 3 at 0x555555557f39: file tasks.cc, line 338.
+(gdb) start 1 < provided_tests/t1.txt
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Temporary breakpoint 4 at 0x555555556779: file project2.cc, line 15.
+Starting program: /mnt/d/Documents/UniFun/AY2022&2023Sem1/ASU/CSE340/Work/Project2/a.out 1 < provided_tests/t1.txt
+
+Temporary breakpoint 4, main (argc=21845, argv=0x0) at project2.cc:15
+15      int main (int argc, char* argv[]) {
+(gdb) continue
+Continuing.
+
+Breakpoint 2, parse_expr () at tasks.cc:326
+326         stack.clear();
+(gdb) next
+329         Token curr_input_token = peek_symbol();
+(gdb)
+332         Token* eoe_tok = new Token();
+(gdb)
+333         eoe_tok->lexeme = "$";
+(gdb)
+334         eoe_tok->token_type = END_OF_FILE;
+(gdb)
+335         eoe_tok->line_no = curr_input_token.line_no;
+(gdb)
+
+Breakpoint 3, parse_expr () at tasks.cc:338
+338         stackNode* eoe_node = new stackNode();
+(gdb)
+339         eoe_node->type = TERM;
+(gdb)
+340         eoe_node->term = eoe_tok;
+(gdb)
+341         stack.push_back(*eoe_node);
+(gdb)
+344         stackNode curr_stack_term_top = stack_peeker();
+(gdb)
+347         while (!((curr_stack_term_top.term->token_type == END_OF_FILE) && (peek_symbol().token_type == END_OF_FILE))) {
+(gdb)
+357             int a = map_tokentype_indextable[curr_stack_term_top.term->token_type];
+(gdb)
+358             int b = map_tokentype_indextable[curr_input_token.token_type];
+(gdb)
+379             if ((precedence_table[a][b] == PREC_LESS) || (precedence_table[a][b] == PREC_EQUAL)) {
+(gdb)
+383                 Token t = get_symbol();
+(gdb)
+387                 stackNode* t_stack_node = new stackNode();
+(gdb)
+388                 t_stack_node->term->lexeme = t.lexeme;
+(gdb)
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff7f1e215 in std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_assign(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) () from /lib/x86_64-linux-gnu/libstdc++.so.6 
+(gdb)
+Single stepping until exit from function _ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_assignERKS4_,
+which has no line number information.
+
+Program terminated with signal SIGSEGV, Segmentation fault.
+The program no longer exists.
+(gdb) Quit
+(gdb) quit

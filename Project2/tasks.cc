@@ -15,7 +15,6 @@ using namespace std;
 LexicalAnalyzer lexer;
 
 // Stack to store
-vector<stackNode> ast_stack;
 vector<stackNode> stack;
 
 // First statement AST
@@ -77,6 +76,7 @@ string valid_rhs[9] = {
     "NUM"
 };
 
+// For printing the BFS tree
 string expr_string[9] = {
     "ID",
     "NUM", 
@@ -384,13 +384,16 @@ exprNode* parse_expr() {
             // t.Print();
 
             // Build the stack node from token
+            // You need to allocate memory for the term pointer otherwise 
+            // it will seg fault if you directly assign it with values 
             stackNode* t_stack_node = new stackNode();
-            t_stack_node->term->lexeme = t.lexeme;
-            t_stack_node->term->line_no = t.line_no;
-            t_stack_node->term->token_type = t.token_type;
+            Token temp;
+            temp.lexeme = t.lexeme;
+            temp.line_no = t.line_no;
+            temp.token_type = t.token_type;
+            t_stack_node->term = &temp;
             t_stack_node->type = TERM;
-
-            t_stack_node->term->Print();
+            // t_stack_node->term->Print();
 
             // Push to stack
             stack.push_back(*t_stack_node);
