@@ -1,17 +1,19 @@
 #pragma once
+
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
-#include <vector>
-#include <string>
 #include <stack>
+#include <string>
 #include <unordered_set>
+#include <vector>
 #include "execute.h"
-#include "tasks.h"
-#include "lexer.h"
 #include "inputbuf.h"
+#include "lexer.h"
+#include "tasks.h"
 
 using namespace std;
+
 
 typedef enum {
     EXPR,
@@ -121,4 +123,4 @@ void parse_block();
 void parse_id_list();
 void parse_decl_section();
 void parse_input();
-void parse_task1();    
+void parse_task_1();

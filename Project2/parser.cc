@@ -1,11 +1,12 @@
-#include <typeinfo>
-#include <unordered_map>
 #include <queue>
 #include <sstream>
-#include "parser.h"
+#include <typeinfo>
+#include <unordered_map>
 #include "error.h"
+#include "parser.h"
 
 using namespace std;
+
 
 // First statement AST
 stringstream first_ast;
@@ -20,11 +21,11 @@ unordered_set<string> valid_rhs;
 unordered_set<string> scalar_list;
 unordered_set<string> array_list;
 
+stringstream expression_type_error_string;
+stringstream assignment_error_string;
+
 bool expression_type_error_trigger = false;
 bool assignment_error_trigger = false;
-
-stringstream expression_type_error;
-stringstream assignment_error;
 
 precedenceValue precedence_table[12][12] = {
     {PREC_GREATER, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_LESS, PREC_GREATER, PREC_LESS, PREC_ERR, PREC_GREATER, PREC_LESS, PREC_LESS, PREC_GREATER},
@@ -599,16 +600,16 @@ exprNode* parse_assign_stmt() {
     // Type Checking
     if (left_child_type == ERROR_TYPE || right_child_type == ERROR_TYPE || left_child_type == ARRAYDDECL_TYPE || right_child_type == ARRAYDDECL_TYPE) {
         expression_type_error_trigger = true;
-        expression_type_error << "\nLine ";
-        expression_type_error << to_string(root_exprnode->id.line_no);
+        string curr_line_expression_type_error = "\nLine " + to_string(root_exprnode->id.line_no);
+        expression_type_error_string << curr_line_expression_type_error;
     }
 
     if (!(left_child_type == ARRAY_TYPE || right_child_type == SCALAR_TYPE)) {
         assignment_error_trigger = true;
-        assignment_error << "\nLine ";
-        assignment_error << to_string(root_exprnode->id.line_no);
+        string curr_line_assignment_error = "\nLine " + to_string(root_exprnode->id.line_no);
+        assignment_error_string << curr_line_assignment_error;
     }
-
+    
     return root_exprnode;
 }
 
@@ -665,7 +666,7 @@ void parse_input() {
     parse_block(); 
 }
 
-void parse_task1() {
+void parse_task_1() {
     // Intialize the RHS and index mapping for token type
     initialize_map();
     intialize_rhs();

@@ -1,23 +1,34 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
-#include "lexer.h"
+#include "error.h"
 #include "execute.h"
-#include "tasks.h"
+#include "lexer.h"
 #include "parser.h"
+#include "tasks.h"
 
 using namespace std;
 
 
 // Task 1
 void parse_and_generate_AST() {
-    parse_task1();
+    parse_task_1();
     print_abstract_syntax_tree();
 }
 
 // Task 2
 void parse_and_type_check() {
-    cout << "2" << endl;
+    /*
+    parse_task_1();
+    
+    if (has_type_error()) {
+        type_error();
+    } else if(has_assignment_error()) {
+        assignment_error();
+    }
+
+    valid_type();
+    */
 }
 
 // Task 3
