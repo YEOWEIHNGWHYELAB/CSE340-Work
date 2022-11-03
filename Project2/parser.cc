@@ -152,7 +152,7 @@ Token get_symbol() {
 /**
  * Special peek symbol that throws EOE whenever it detects its the end of statement
 */
-Token peek_symbol(variableAccessType access_type) {
+Token peek_symbol() {
     // 3 cases of EOE
     // If the next token is SEMICOLON
     // If the next token is RBRAC and the token after that is EQUAL
@@ -301,7 +301,7 @@ string reverse_rhs_builder(vector<stackNode*> rhs_stack) {
  *      2. Check if the popped elements match the RHS of one of the rules
  *      3. Build the abstract syntax tree after the reduction
 */
-exprNode* parse_expr(variableAccessType access_type) {
+exprNode* parse_expr() {
     // Ensure stack is cleared first!
     stack_statement_parsing.clear();
 
@@ -312,7 +312,7 @@ exprNode* parse_expr(variableAccessType access_type) {
     stack_statement_parsing.push_back(eoe_stacknode);
 
     // If $ is on top of the stack and peek_symbol() is also $;
-    while (!(terminal_peek(stack_statement_parsing).token_type == END_OF_FILE && peek_symbol(access_type).token_type == END_OF_FILE)) {
+    while (!(terminal_peek(stack_statement_parsing).token_type == END_OF_FILE && peek_symbol().token_type == END_OF_FILE)) {
         /**
          * curr_stack_term_top is the current term on top or just below top of stack while
          * curr_input_token is the current input token
@@ -322,7 +322,7 @@ exprNode* parse_expr(variableAccessType access_type) {
          * t is the token from input
          * b is the token type of t 
         */
-        Token t = peek_symbol(access_type);
+        Token t = peek_symbol();
         TokenType token_type_input = t.token_type;
 
         // Check if the input token type can be found in the precedence table
@@ -522,7 +522,7 @@ exprNode* parse_expr(variableAccessType access_type) {
     return stack_statement_parsing[1]->expr;
 }       
 
-exprNode* parse_variable_access(variableAccessType access_type) {
+exprNode* parse_variable_access() {
     Token id_token = expect(ID);
 
     // ID exprNode
@@ -585,7 +585,7 @@ exprNode* parse_variable_access(variableAccessType access_type) {
             // Array access [expr]
             expect(LBRAC);
             exprNode* right_child = new exprNode();
-            right_child = parse_expr(access_type);
+            right_child = parse_expr();
             expect(RBRAC);
 
             // Building the id[expr] = expr
@@ -612,7 +612,7 @@ exprNode* parse_variable_access(variableAccessType access_type) {
 exprNode* parse_output_stmt() {
     expect(OUTPUT);
     exprNode* head = new exprNode();
-    head = parse_variable_access(OUTPUT_ACCESS);
+    head = parse_variable_access();
 
     expect(SEMICOLON);
     return head;
@@ -621,7 +621,7 @@ exprNode* parse_output_stmt() {
 exprNode* parse_assign_stmt() {
     // Left child comes from parsing of variable access
     exprNode* left_child = new exprNode();
-    left_child = parse_variable_access(ASSIGN_ACCESS);
+    left_child = parse_variable_access();
     expect(EQUAL);
 
     // at this point we have parsed the [.] or [expr]
@@ -630,7 +630,7 @@ exprNode* parse_assign_stmt() {
 
     // Right child comes from the parse expresssion
     exprNode* right_child = new exprNode();
-    right_child = parse_expr(ASSIGN_ACCESS);
+    right_child = parse_expr();
     expect(SEMICOLON);
 
     // Root node consist of equal and the left child from 

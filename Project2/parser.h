@@ -63,11 +63,6 @@ typedef enum {
     EXPR_OPER // (EXPR)
 } operatorType;
 
-typedef enum {
-    OUTPUT_ACCESS,
-    ASSIGN_ACCESS
-} variableAccessType;
-
 // Strictly of type expression
 typedef struct exprNode {
     // enum type: ID_OPER, PLUS_OPER, MINUS_OPER, DIV_OPER, ARRAY_ELEM_OPER, WHOLE_ARRAY_OPER
@@ -101,7 +96,7 @@ typedef struct exprNode {
 void initialize_map();
 void intialize_rhs();
 
-Token peek_symbol(bool);
+Token peek_symbol();
 Token get_symbol();
 
 // For printing AST
@@ -110,11 +105,11 @@ void print_abstract_syntax_tree();
 
 // Lexer additional function
 Token expect(TokenType);
-Token terminal_peek(vector<stackNode* >);
+Token terminal_peek(vector<stackNode*>);
 
 // Parser
-exprNode* parse_expr(variableAccessType);
-exprNode* parse_variable_access(variableAccessType);
+exprNode* parse_expr();
+exprNode* parse_variable_access();
 exprNode* parse_output_stmt();
 exprNode* parse_assign_stmt();
 void parse_stmt();
