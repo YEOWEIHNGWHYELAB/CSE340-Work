@@ -7,7 +7,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 	echo;
 	echo "Compilation Initialized!";
 
-	if g++ --std=c++11 -g -Wall project2.cc tasks.cc error.cc lexer.cc inputbuf.cc execute.cc; then
+	if g++ --std=c++11 -g -Wall project2.cc tasks.cc parser.cc lexer.cc error.cc inputbuf.cc execute.cc; then
 		echo "----------------------";
 		echo "Successfully Compiled!";
 	else
