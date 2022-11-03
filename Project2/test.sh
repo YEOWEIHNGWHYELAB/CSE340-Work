@@ -44,6 +44,7 @@ usage()
 
 if [ "$#" -lt "1" ]; then
     echo "Error: task number not specified!"
+	echo "Please enter the task number again!"
     usage
 fi
 

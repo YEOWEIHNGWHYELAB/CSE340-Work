@@ -65,6 +65,9 @@ string expr_string[9] = {
     "[.]"
 };
 
+/**
+ * Getters for the type and assignment errors
+*/
 bool has_type_error() {
     return expression_type_error_trigger;
 }
@@ -73,6 +76,9 @@ bool has_assignment_error() {
     return assignment_error_trigger;
 }
 
+/**
+ * Printers for the list of type error or assignment error
+*/
 void print_type_error_line() {
     cout << expression_type_error_string.str();
 }
@@ -136,10 +142,16 @@ operatorType operator_type(string curr_rhs) {
     }
 }
 
+/**
+ * No different from lexer.GetToken()
+*/
 Token get_symbol() {
     return lexer.GetToken();
 }
 
+/**
+ * Special peek symbol that throws EOE whenever it detects its the end of statement
+*/
 Token peek_symbol(variableAccessType access_type) {
     // 3 cases of EOE
     // If the next token is SEMICOLON
@@ -643,7 +655,7 @@ exprNode* parse_assign_stmt() {
 
     if (!(left_child_type == ARRAY_TYPE || right_child_type == SCALAR_TYPE)) {
         assignment_error_trigger = true;
-        
+
         string curr_line_assignment_error = "\nLine " + to_string(root_exprnode->id.line_no);
         assignment_error_string << curr_line_assignment_error;
     }
