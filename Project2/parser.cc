@@ -401,6 +401,7 @@ exprNode* parse_expr(variableAccessType access_type) {
 							root_stacknode->expr->type = ERROR_TYPE;
 						}
 					} else {
+                        // If it is NUM, then it will just be SCALAR
                         root_stacknode->expr->type = SCALAR_TYPE;
                     }
                 } else if (curr_operator == WHOLE_ARRAY_OPER) {
@@ -419,9 +420,9 @@ exprNode* parse_expr(variableAccessType access_type) {
                     root_stacknode->expr->child.right = nullptr;
 
                     // Type check
-                    if (root_stacknode->expr->curr_operator == NUM_OPER) {
+                    if (left_child->expr->type == SCALAR_TYPE) {
                         root_stacknode->expr->type = ARRAY_TYPE;
-                    } else if (left_child->expr->type != ARRAYDDECL_TYPE) {
+                    }else if (left_child->expr->type != ARRAYDDECL_TYPE) {
                         root_stacknode->expr->type = ERROR_TYPE;
                     } else {
                         root_stacknode->expr->type = ARRAY_TYPE;
@@ -429,7 +430,10 @@ exprNode* parse_expr(variableAccessType access_type) {
                 } else if (curr_operator == EXPR_OPER) {
                     // EXPR_OPER (E)
                     root_stacknode = curr_rhs[1];
+
+                    // Type is just the EXPR type itself
                     root_stacknode->expr->type = curr_rhs[1]->expr->type;
+
                     root_stacknode->expr->id.line_no = curr_rhs[1]->expr->id.line_no;
                 } else if (curr_operator == ARRAY_ELEM_OPER) {
                     // ARRAY_ELEM_OPER E[E]
@@ -450,14 +454,13 @@ exprNode* parse_expr(variableAccessType access_type) {
                     root_stacknode->expr->child.right = right_child->expr;
 
                     // Type check
-                    if (left_child->expr->type != ARRAYDDECL_TYPE) {
+                    if (left_child->expr->type == SCALAR_TYPE || left_child->expr->type == ERROR_TYPE) {
                         root_stacknode->expr->type = ERROR_TYPE;
                     } else if(right_child->expr->type != SCALAR_TYPE) {
                         root_stacknode->expr->type = ERROR_TYPE;
                     } else {
                         root_stacknode->expr->type = SCALAR_TYPE;
                     }
-
                 } else {
                     // PLUS_OPER, MINUS_OPER, DIV_OPER, MULT_OPER
                     root_stacknode->expr = new exprNode();
@@ -475,14 +478,22 @@ exprNode* parse_expr(variableAccessType access_type) {
                     stackNode* right_child = new stackNode();
                     right_child = curr_rhs[0];
                     root_stacknode->expr->child.right = right_child->expr;
-
+                    
                     // Type check
-                    if (left_child->expr->type == SCALAR_TYPE && right_child->expr->type == SCALAR_TYPE) {
-                        root_stacknode->expr->type = SCALAR_TYPE;
-                    } else if (left_child->expr->type == ARRAY_TYPE && right_child->expr->type == ARRAY_TYPE) {
-                        root_stacknode->expr->type = ARRAY_TYPE;
-                    } else {
-                        root_stacknode->expr->type = ERROR_TYPE;
+                    if (curr_operator == PLUS_OPER || curr_operator == MINUS_OPER) {
+                        if (left_child->expr->type == SCALAR_TYPE && right_child->expr->type == SCALAR_TYPE) {
+                            root_stacknode->expr->type = SCALAR_TYPE;
+                        } else if (left_child->expr->type == ARRAY_TYPE && right_child->expr->type == ARRAY_TYPE) {
+                            root_stacknode->expr->type = ARRAY_TYPE;
+                        } else {
+                            root_stacknode->expr->type = ERROR_TYPE;
+                        }
+                    } else if (curr_operator == MULT_OPER || curr_operator == DIV_OPER) {
+                        if (left_child->expr->type == SCALAR_TYPE && right_child->expr->type == SCALAR_TYPE) {
+                            root_stacknode->expr->type = SCALAR_TYPE;
+                        } else {
+                            root_stacknode->expr->type = ERROR_TYPE;
+                        }
                     }
                 }
 
@@ -525,8 +536,10 @@ exprNode* parse_variable_access(variableAccessType access_type) {
 
         // Type check
         if (array_list.find(id_token.lexeme) != array_list.end()) {
+            // If the ID is an array
             id_exprnode->type = ARRAYDDECL_TYPE;
         } else if(scalar_list.find(id_token.lexeme) != scalar_list.end()) {
+            // Otherwise it if it is in scalar list
             id_exprnode->type = SCALAR_TYPE;
         } else {
             id_exprnode->type = ERROR_TYPE;
@@ -550,11 +563,8 @@ exprNode* parse_variable_access(variableAccessType access_type) {
             root_exprnode->child.right = nullptr;
 
             // Type check
-            if (id_exprnode->type == ERROR_TYPE) {
-                root_exprnode->type = ERROR_TYPE;
-            } else if (id_exprnode->type == SCALAR_TYPE) {
-                root_exprnode->type = ERROR_TYPE;
-            } else if (id_exprnode->type == ARRAYDDECL_TYPE) {
+            if (id_exprnode->type == SCALAR_TYPE || id_exprnode->type == ARRAYDDECL_TYPE) {
+                // If child is a scalar, then it will be array
                 root_exprnode->type = ARRAY_TYPE;
             } else {
                 root_exprnode->type = ERROR_TYPE;
@@ -572,12 +582,12 @@ exprNode* parse_variable_access(variableAccessType access_type) {
             root_exprnode->child.right = right_child;
 
             // Type check
-            if (id_exprnode->type != ARRAYDDECL_TYPE) {
+            if (id_exprnode->type == SCALAR_TYPE || id_exprnode->type == ERROR_TYPE) {
                 root_exprnode->type = ERROR_TYPE;
-            } else if (right_child->type != SCALAR_TYPE) {
-                root_exprnode->type = ERROR_TYPE;
-            } else {
+            } else if (right_child->type == SCALAR_TYPE) {
                 root_exprnode->type = SCALAR_TYPE;
+            } else {
+                root_exprnode->type = ERROR_TYPE;
             }
         }
     } else {
@@ -626,12 +636,14 @@ exprNode* parse_assign_stmt() {
     // Type check
     if (left_child_type == ERROR_TYPE || left_child_type == ARRAYDDECL_TYPE || right_child_type == ERROR_TYPE || right_child_type == ARRAYDDECL_TYPE) {
         expression_type_error_trigger = true;
+
         string curr_line_expression_type_error = "\nLine " + to_string(root_exprnode->id.line_no);
         expression_type_error_string << curr_line_expression_type_error;
     }
 
     if (!(left_child_type == ARRAY_TYPE || right_child_type == SCALAR_TYPE)) {
         assignment_error_trigger = true;
+        
         string curr_line_assignment_error = "\nLine " + to_string(root_exprnode->id.line_no);
         assignment_error_string << curr_line_assignment_error;
     }

@@ -12,24 +12,30 @@ using namespace std;
 
 // Task 1
 void parse_and_generate_AST() {
+    // Parse and build all the AST 
     parse_task_1();
+
+    // Print only the first AST
     print_abstract_syntax_tree();
 }
 
 // Task 2
 void parse_and_type_check() {
+    // Parse and get the types and check if any syntax error exist
     parse_task_1();
     
+    // Check for type and assignment error
     if (has_type_error()) {
         type_error();
         print_type_error_line();
         exit(1);
-    } else if(has_assignment_error()) {
+    } else if (has_assignment_error()) {
         assignment_error();
         print_assignment_error_line();
         exit(1);
     }
 
+    // If no syntax error, type error, assignment error 
     valid_type();
 }
 
