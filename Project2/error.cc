@@ -9,7 +9,7 @@ void syntax_error() {
 }
 
 void type_error() {
-    cout << "Disappointing expression type error :(" << endl;
+    cout << "Expression type error :(" << endl;
 }
 
 void assignment_error() {

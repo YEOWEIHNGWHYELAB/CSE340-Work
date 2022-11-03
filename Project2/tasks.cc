@@ -18,17 +18,19 @@ void parse_and_generate_AST() {
 
 // Task 2
 void parse_and_type_check() {
-    /*
     parse_task_1();
     
     if (has_type_error()) {
         type_error();
+        print_type_error_line();
+        exit(1);
     } else if(has_assignment_error()) {
         assignment_error();
+        print_assignment_error_line();
+        exit(1);
     }
 
     valid_type();
-    */
 }
 
 // Task 3

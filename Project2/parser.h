@@ -60,7 +60,7 @@ typedef enum {
     EQUAL_OPER,
     ARRAY_ELEM_OPER, 
     WHOLE_ARRAY_OPER,
-    EXPR_OPER
+    EXPR_OPER // (EXPR)
 } operatorType;
 
 typedef enum {
@@ -124,3 +124,8 @@ void parse_id_list();
 void parse_decl_section();
 void parse_input();
 void parse_task_1();
+
+bool has_type_error();
+bool has_assignment_error();
+void print_type_error_line();
+void print_assignment_error_line();

@@ -12,18 +12,28 @@ using namespace std;
 stringstream first_ast;
 
 LexicalAnalyzer lexer;
-vector<exprNode*> stack_main;
+
+// A vector of AST root of every statement
+vector<exprNode*> ast_root;
+
+// Stack for parsing each statement
 vector<stackNode*> stack_statement_parsing;
 
+// Maps TokenType to appropriate index for precedence_table
 unordered_map<TokenType, int> map_tokentype_indextable;
+
+// Store all the valid RHS
 unordered_set<string> valid_rhs;
 
+// Variable set
 unordered_set<string> scalar_list;
 unordered_set<string> array_list;
 
+// String stream for storing expression type and assignemnt error
 stringstream expression_type_error_string;
 stringstream assignment_error_string;
 
+// Boolean triggers for expression type and assignemnt error
 bool expression_type_error_trigger = false;
 bool assignment_error_trigger = false;
 
@@ -54,6 +64,22 @@ string expr_string[9] = {
     "[]", 
     "[.]"
 };
+
+bool has_type_error() {
+    return expression_type_error_trigger;
+}
+
+bool has_assignment_error() {
+    return assignment_error_trigger;
+}
+
+void print_type_error_line() {
+    cout << expression_type_error_string.str();
+}
+
+void print_assignment_error_line() {
+    cout << assignment_error_string.str();
+}
 
 void initialize_map() {
     map_tokentype_indextable.insert(pair<TokenType, int>(PLUS, 0));
@@ -152,7 +178,8 @@ void expr_node_printer(exprNode* curr_expr) {
  * Prints the abstract syntax tree using BFS
 */
 void print_abstract_syntax_tree() {
-    exprNode* root = stack_main[0];
+    // Only take the ast_root of first statement
+    exprNode* root = ast_root[0];
 
     if (root == nullptr) {
         return;
@@ -364,11 +391,11 @@ exprNode* parse_expr(variableAccessType access_type) {
                     root_stacknode->expr->child.right = nullptr;
                     root_stacknode->expr->child.left = nullptr;
 					
+                    // Type check
 					if (curr_operator == ID_OPER) {
-                        // Type check
-						if (scalar_list.find(curr_rhs[0]->term.lexeme)!=scalar_list.end()) {
+						if (scalar_list.find(curr_rhs[0]->term.lexeme) != scalar_list.end()) {
 							root_stacknode->expr->type = SCALAR_TYPE;
-						} else if(array_list.find(curr_rhs[0]->term.lexeme)!=array_list.end()) {
+						} else if (array_list.find(curr_rhs[0]->term.lexeme) != array_list.end()) {
 							root_stacknode->expr->type = ARRAYDDECL_TYPE;
 						} else {
 							root_stacknode->expr->type = ERROR_TYPE;
@@ -376,7 +403,6 @@ exprNode* parse_expr(variableAccessType access_type) {
 					} else {
                         root_stacknode->expr->type = SCALAR_TYPE;
                     }
-
                 } else if (curr_operator == WHOLE_ARRAY_OPER) {
                     root_stacknode->expr = new exprNode();
                     root_stacknode->expr->curr_operator = curr_operator;
@@ -400,14 +426,13 @@ exprNode* parse_expr(variableAccessType access_type) {
                     } else {
                         root_stacknode->expr->type = ARRAY_TYPE;
                     }
-
                 } else if (curr_operator == EXPR_OPER) {
+                    // EXPR_OPER (E)
                     root_stacknode = curr_rhs[1];
                     root_stacknode->expr->type = curr_rhs[1]->expr->type;
                     root_stacknode->expr->id.line_no = curr_rhs[1]->expr->id.line_no;
-
                 } else if (curr_operator == ARRAY_ELEM_OPER) {
-                    // ARRAY_ELEM_OPER
+                    // ARRAY_ELEM_OPER E[E]
                     root_stacknode->expr = new exprNode();
                     root_stacknode->expr->curr_operator = ARRAY_ELEM_OPER;
 
@@ -451,9 +476,10 @@ exprNode* parse_expr(variableAccessType access_type) {
                     right_child = curr_rhs[0];
                     root_stacknode->expr->child.right = right_child->expr;
 
-                    if (left_child->type == 0 && right_child->type == 0) {
+                    // Type check
+                    if (left_child->expr->type == SCALAR_TYPE && right_child->expr->type == SCALAR_TYPE) {
                         root_stacknode->expr->type = SCALAR_TYPE;
-                    } else if(left_child->type == 2 && right_child->type == 2) {
+                    } else if (left_child->expr->type == ARRAY_TYPE && right_child->expr->type == ARRAY_TYPE) {
                         root_stacknode->expr->type = ARRAY_TYPE;
                     } else {
                         root_stacknode->expr->type = ERROR_TYPE;
@@ -497,7 +523,7 @@ exprNode* parse_variable_access(variableAccessType access_type) {
          * If the assignment is either ID itself
         */ 
 
-        // Check for type
+        // Type check
         if (array_list.find(id_token.lexeme) != array_list.end()) {
             id_exprnode->type = ARRAYDDECL_TYPE;
         } else if(scalar_list.find(id_token.lexeme) != scalar_list.end()) {
@@ -506,7 +532,7 @@ exprNode* parse_variable_access(variableAccessType access_type) {
             id_exprnode->type = ERROR_TYPE;
         }
 
-        // id; OR id = expr;
+        // ID; OR ID = EXPR;
         return id_exprnode;
     } else if (t1.token_type == LBRAC) {
         /**
@@ -523,7 +549,7 @@ exprNode* parse_variable_access(variableAccessType access_type) {
             root_exprnode->curr_operator = WHOLE_ARRAY_OPER;
             root_exprnode->child.right = nullptr;
 
-            // Check for type
+            // Type check
             if (id_exprnode->type == ERROR_TYPE) {
                 root_exprnode->type = ERROR_TYPE;
             } else if (id_exprnode->type == SCALAR_TYPE) {
@@ -545,7 +571,7 @@ exprNode* parse_variable_access(variableAccessType access_type) {
             root_exprnode->curr_operator = ARRAY_ELEM_OPER;
             root_exprnode->child.right = right_child;
 
-            // Check for type
+            // Type check
             if (id_exprnode->type != ARRAYDDECL_TYPE) {
                 root_exprnode->type = ERROR_TYPE;
             } else if (right_child->type != SCALAR_TYPE) {
@@ -597,8 +623,8 @@ exprNode* parse_assign_stmt() {
     exprNodeType left_child_type = left_child->type;
     exprNodeType right_child_type = right_child->type;
     
-    // Type Checking
-    if (left_child_type == ERROR_TYPE || right_child_type == ERROR_TYPE || left_child_type == ARRAYDDECL_TYPE || right_child_type == ARRAYDDECL_TYPE) {
+    // Type check
+    if (left_child_type == ERROR_TYPE || left_child_type == ARRAYDDECL_TYPE || right_child_type == ERROR_TYPE || right_child_type == ARRAYDDECL_TYPE) {
         expression_type_error_trigger = true;
         string curr_line_expression_type_error = "\nLine " + to_string(root_exprnode->id.line_no);
         expression_type_error_string << curr_line_expression_type_error;
@@ -619,11 +645,11 @@ void parse_stmt() {
     if (t.token_type == ID) {
         exprNode* root_exprnode = new exprNode();
         root_exprnode = parse_assign_stmt();
-        stack_main.push_back(root_exprnode);
+        ast_root.push_back(root_exprnode);
     } else if(t.token_type == OUTPUT) {
         exprNode* root_exprnode = new exprNode();
         root_exprnode = parse_output_stmt();
-        stack_main.push_back(root_exprnode);
+        ast_root.push_back(root_exprnode);
     } else {
         syntax_error();
     }
