@@ -646,18 +646,33 @@ exprNode* parse_assign_stmt() {
     exprNodeType right_child_type = right_child->type;
     
     // Type check
-    if (left_child_type == ERROR_TYPE || left_child_type == ARRAYDDECL_TYPE || right_child_type == ERROR_TYPE || right_child_type == ARRAYDDECL_TYPE) {
-        expression_type_error_trigger = true;
+    // 3 valid check cases
+    // 1) left and right need to be both scalar 
+    // 2) left and right need to be both array
+    // 3) left is array, right scalar
+    // If it is none of them -> Type error 
+    if (left_child_type == SCALAR_TYPE && right_child_type == SCALAR_TYPE) {
 
-        string curr_line_expression_type_error = "\nLine " + to_string(root_exprnode->id.line_no);
-        expression_type_error_string << curr_line_expression_type_error;
-    }
+    } else if (left_child_type == ARRAY_TYPE && right_child_type == ARRAY_TYPE) {
 
-    if (!(left_child_type == ARRAY_TYPE || right_child_type == SCALAR_TYPE)) {
+    } else if (left_child_type == ARRAY_TYPE && right_child_type == SCALAR_TYPE) {
+        
+    } else {
+        // Set trigger for assignment error
         assignment_error_trigger = true;
 
+        // Store all lines with assignment errors
         string curr_line_assignment_error = "\nLine " + to_string(root_exprnode->id.line_no);
         assignment_error_string << curr_line_assignment_error;
+    }
+
+    if (left_child_type == ERROR_TYPE || left_child_type == ARRAYDDECL_TYPE || right_child_type == ERROR_TYPE || right_child_type == ARRAYDDECL_TYPE) {
+        // Set trigger for type error
+        expression_type_error_trigger = true;
+
+        // Store all the lines with the type error
+        string curr_line_expression_type_error = "\nLine " + to_string(root_exprnode->id.line_no);
+        expression_type_error_string << curr_line_expression_type_error;
     }
     
     return root_exprnode;
@@ -680,6 +695,8 @@ void parse_stmt() {
 }
 
 void parse_stmt_list() {
+    parse_stmt();
+
     while (lexer.peek(1).token_type != RBRACE) {
         parse_stmt();
     }
@@ -693,16 +710,18 @@ void parse_block() {
 
 void parse_id_list() {
     // Scalar declaration
-    expect(SCALAR);    
+    expect(SCALAR);
+    Token curr_var = expect(ID);    
     while (lexer.peek(1).token_type != ARRAY) {
-        Token curr_var = expect(ID);
+        curr_var = expect(ID);
         scalar_list.insert(curr_var.lexeme);
     }
 
     // Array declaration
     expect(ARRAY);
+    curr_var = expect(ID);
     while (lexer.peek(1).token_type != LBRACE) {
-        Token curr_var = expect(ID);
+        curr_var = expect(ID);
         array_list.insert(curr_var.lexeme);
     }
 }
