@@ -59,7 +59,9 @@ struct InstructionNode * parse_generate_intermediate_representation()
     // }
     // 1 2 3 4 5 6
 
-
+    /*---------------------------*/
+    // a, b, c, d;
+    /*---------------------------*/
     // Assigning location for variable "a"
     int address_a = next_available;
     mem[next_available] = 0;    // next_available is a global variable that is decalred in 
@@ -67,7 +69,7 @@ struct InstructionNode * parse_generate_intermediate_representation()
 
     // Assigning location for variable "b"
     int address_b = next_available;
-    mem[next_available] = 0;
+    mem[next_available] = 0; // Initialize to zero
     next_available++;
 
     // Assigning location for variable "c"
@@ -80,6 +82,9 @@ struct InstructionNode * parse_generate_intermediate_representation()
     mem[next_available] = 0;
     next_available++;
 
+    /*---------------------------*/
+    // Just constants that will be used for assignment or computing
+    /*---------------------------*/
     // Assigning location for constant 10
     int address_ten = next_available;
     mem[next_available] = 10;
@@ -110,6 +115,9 @@ struct InstructionNode * parse_generate_intermediate_representation()
     mem[next_available] = 4;
     next_available++;
 
+    /*---------------------------*/
+    // Instruction Nodes to build
+    /*---------------------------*/
     struct InstructionNode * i1 = new InstructionNode;
     struct InstructionNode * i2 = new InstructionNode;
     struct InstructionNode * i3 = new InstructionNode;
@@ -133,6 +141,8 @@ struct InstructionNode * parse_generate_intermediate_representation()
     struct InstructionNode * i21 = new InstructionNode;
     struct InstructionNode * i22 = new InstructionNode;
 
+    /*---------------------------*/
+    /*---------------------------*/
     i1->type = IN;                                      // input a
     i1->input_inst.var_index = address_a;
     i1->next = i2;
@@ -245,6 +255,13 @@ struct InstructionNode * parse_generate_intermediate_representation()
     i22->next = NULL;
 
     // Inputs
+    /*---------------------------*/
+    // 1 2 3 4 5 6
+    //
+    // Note that these are the input that will be 
+    // assigned to the variables selected if you 
+    // do say "input a"
+    /*---------------------------*/
     inputs.push_back(1);
     inputs.push_back(2);
     inputs.push_back(3);

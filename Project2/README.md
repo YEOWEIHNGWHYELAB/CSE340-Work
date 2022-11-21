@@ -1,5 +1,9 @@
 # Project 2
 
+## Project State
+
+Only Task 1 has been completed.
+
 ## Project Tips
 
 For task 1 you just need to print the first abstract syntax tree for first line. However, that does not mean you don't need build the abstract syntax tree for subsequent statments. Because you will still need to return whether which of the statements has syntax error.

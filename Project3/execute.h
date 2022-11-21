@@ -9,9 +9,11 @@
 #include <string>
 #include <vector>
 
+// Memory declaration
 extern int mem[1000];
-extern int next_available;
+extern int next_available; // The current avaiable memory index
 
+// To store the input integers from buffer
 extern std::vector<int> inputs;
 extern int next_input;
 
@@ -29,8 +31,7 @@ enum ConditionalOperatorType {
     CONDITION_NOTEQUAL
 };
 
-enum InstructionType
-{
+enum InstructionType {
     NOOP = 1000,
     IN,
     OUT,
@@ -39,32 +40,29 @@ enum InstructionType
     JMP
 };
 
-struct InstructionNode
-{
+struct InstructionNode {
+    // Indicator of the instruction node type
     InstructionType type;
 
-    union
-    {
-        struct
-        {
+    // Different types of struct for instruction node
+    union {
+        struct {
             int left_hand_side_index;
             int opernd1_index;
             int opernd2_index;
             
-            /*
+            /**
              * If op == OPERATOR_NONE then only opernd1 is meaningful.
              * Otherwise both opernds are meaningful
              */
             ArithmeticOperatorType op;
         } assign_inst;
         
-        struct
-        {
+        struct {
             int var_index;
         } input_inst;
         
-        struct
-        {
+        struct {
             int var_index;
         } output_inst;
         
@@ -81,6 +79,7 @@ struct InstructionNode
   
     };
 
+    // Next statement after current node
     struct InstructionNode * next; // next statement in the list or NULL
 };
 

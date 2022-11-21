@@ -11,6 +11,7 @@
 
 #include "lexer.h"
 #include "inputbuf.h"
+#include "error.h"
 
 using namespace std;
 
@@ -158,6 +159,16 @@ Token LexicalAnalyzer::GetToken()
         index = index + 1;
     }
     return token;
+}
+
+Token LexicalAnalyzer::expect(TokenType expected_type) {
+    Token curr_token = GetToken();
+
+    if (curr_token.token_type != expected_type) {
+        parsing_error();
+    }
+
+    return curr_token;
 }
 
 // peek requires that the argument "howFar" be positive.

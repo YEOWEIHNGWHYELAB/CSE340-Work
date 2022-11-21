@@ -16,25 +16,25 @@ using namespace std;
 
 #define DEBUG 0     // 1 => Turn ON debugging, 0 => Turn OFF debugging
 
+// Memory management for variables and constants
 int mem[1000];
 int next_available = 0;
 
+// List of inputs from input buffer
 std::vector<int> inputs;
 int next_input = 0;
 
-void debug(const char* format, ...)
-{
+void debug(const char* format, ...) {
     va_list args;
-    if (DEBUG)
-    {
+    
+    if (DEBUG) {
         va_start (args, format);
         vfprintf (stdout, format, args);
         va_end (args);
     }
 }
 
-void execute_program(struct InstructionNode * program)
-{
+void execute_program(struct InstructionNode * program) {
     struct InstructionNode * pc = program;
     int op1, op2, result;
 
@@ -134,8 +134,10 @@ void execute_program(struct InstructionNode * program)
     }
 }
 
-int main()
-{
+int main() {
+    /**
+     * Note that program contains the first instruction node to execute
+    */
     struct InstructionNode * program;
     program = parse_generate_intermediate_representation();
     execute_program(program);
