@@ -3,6 +3,7 @@
 #include "execute.h"
 #include "lexer.h"
 
+
 using namespace std;
 
 // lexer for reading buffer input
@@ -77,19 +78,40 @@ struct InstructionNode * parse_assign_stmt(Token id_token) {
 }
 
 struct InstructionNode* parse_input_stmt() {
-    lexer.expect(INPUT);
+    /**
+     * input stmt -> input ID SEMICOLON
+    */
+
+    // ID
     Token input_token = lexer.GetToken();
 
+    struct InstructionNode* input_instnode = new InstructionNode;
+    input_instnode->type = IN;
+    input_instnode->input_inst.var_index = location(input_token.lexeme);
+    input_instnode->next = nullptr;
+
+    /*
     mem[location(input_token.lexeme)] = inputs[next_input];
     next_input = next_input + 1;
+    */
+
+    lexer.expect(SEMICOLON);
 }
 
 struct InstructionNode* parse_output_stmt() {
+    /**
+     * output stmt -> output ID SEMICOLON
+    */
+
+    // ID
     Token output_token = lexer.GetToken();
 
-    struct InstructionNode * output_instnode = new InstructionNode;
+    struct InstructionNode* output_instnode = new InstructionNode;
     output_instnode->type = OUT;
     output_instnode->output_inst.var_index = location(output_token.lexeme);
+    output_instnode->next = nullptr;
+
+    lexer.expect(SEMICOLON);
     
     return output_instnode;
 }
@@ -143,9 +165,6 @@ struct InstructionNode* parse_stmt_list() {
         } else {
             curr_stmt->next = instList;
         }
-    } else {
-        // No more statment, so current instruction node is the last node
-        curr_stmt->next = nullptr;
     }
 
     return curr_stmt;
@@ -153,7 +172,7 @@ struct InstructionNode* parse_stmt_list() {
 
 struct InstructionNode* parse_body() {
     lexer.expect(LBRACE);
-    InstructionNode * instruction_entry = parse_stmt_list();
+    InstructionNode* instruction_entry = parse_stmt_list();
     lexer.expect(RBRACE);
 
     return instruction_entry;
