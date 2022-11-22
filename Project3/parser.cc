@@ -20,8 +20,19 @@ Token expect(TokenType expected_type) {
     return curr_token;
 }
 
-
+// Pre-Definition
 struct InstructionNode* parse_if_stmt();
+struct InstructionNode* parse_while_stmt();
+
+ConditionalOperatorType get_condition(Token condition_token) {
+    if (condition_token.token_type == GREATER) {
+        return CONDITION_GREATER;
+    } else if (condition_token.token_type == LESS) {
+        return CONDITION_LESS;
+    } else {
+        return CONDITION_NOTEQUAL;
+    }
+}
 
 int parse_primary() {
     Token curr_token = lexer.GetToken();
@@ -146,11 +157,11 @@ struct InstructionNode* parse_stmt() {
         // Assign statment starts with ID
         return parse_assign_stmt(curr_token);
     } else if (curr_token.token_type == WHILE) {
-        //return parse_while_stmt();
+        return parse_while_stmt();
     } else if (curr_token.token_type == SWITCH) {
         //return parse_switch_stmt();
     } else if (curr_token.token_type == FOR) {
-        //return parse_for_stmt();
+        // return parse_for_stmt();
     } else if (curr_token.token_type == INPUT) {
         return parse_input_stmt();
     } else if (curr_token.token_type == OUTPUT) {
@@ -213,6 +224,7 @@ struct InstructionNode* parse_if_stmt() {
     */
     struct InstructionNode* if_instnode = new InstructionNode;
     if_instnode->type = CJMP;
+    if_instnode->next = nullptr;
 
     /**
      * condition -> primary relop primary
@@ -271,6 +283,56 @@ struct InstructionNode* parse_if_stmt() {
     if_instnode->cjmp_inst.target = no_op_instnode;
 
     return if_instnode;
+}
+
+void parse_condition(InstructionNode* inst_node) {
+    inst_node->cjmp_inst.opernd1_index = parse_primary();
+    inst_node->cjmp_inst.condition_op = get_condition(lexer.GetToken());
+    inst_node->cjmp_inst.opernd2_index = parse_primary();
+}
+
+struct InstructionNode* parse_while_stmt() {
+    /**
+     * while_stmt -> WHILE condition body
+    */
+    struct InstructionNode* while_stmt = new InstructionNode();
+    while_stmt->type = CJMP;
+    
+    // Get the condition for while execution
+    parse_condition(while_stmt);
+
+    struct InstructionNode* while_body = parse_body();
+    while_stmt->next = while_body;
+
+    // Create jmp node of type JMP and do not forget to set next field to nullptr
+    struct InstructionNode* jmp_node = new InstructionNode();
+    jmp_node->type = JMP;
+    jmp_node->next = nullptr;
+
+    // Set jmp->jmp_inst.target to inst
+    jmp_node->jmp_inst.target = while_stmt;
+
+    // Append jmp node to end of body of while
+    InstructionNode* temp_while = while_body->next;
+    while (temp_while->next != nullptr) {
+        temp_while = temp_while->next;
+    }
+    temp_while->next = jmp_node;
+
+    // Create no-op node and attach it to the list of instruction after the jmp node
+    InstructionNode* noop_instnode = new InstructionNode();
+    noop_instnode->type = NOOP;
+    noop_instnode->next = nullptr;
+    jmp_node->next = noop_instnode;
+
+    // Set inst->cjmp_target.target to point to no-op node
+    while_stmt->cjmp_inst.target = noop_instnode;
+    
+    return while_stmt;
+}
+
+struct InstructionNode* parse_for_stmt() {
+
 }
 
 void parse_num() {
