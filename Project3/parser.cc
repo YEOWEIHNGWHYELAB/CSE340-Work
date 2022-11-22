@@ -19,16 +19,19 @@ int parse_primary() {
         return location(curr_token.lexeme);
     } else {
         // NUM
-        memory_allocation(curr_token.lexeme);
+        memory_constant_allocation(curr_token.lexeme);
         return location(curr_token.lexeme);
     }
 }
 
-struct InstructionNode * parse_assign_stmt(Token id_token) {
+struct InstructionNode* parse_assign_stmt(Token id_token) {
     // Create the new assignment instrcution node
     struct InstructionNode* assignment_instnode = new InstructionNode;
     assignment_instnode->type = ASSIGN;
     assignment_instnode->next = nullptr;
+
+    // What variable to assign to?
+    assignment_instnode->assign_inst.left_hand_side_index = location(id_token.lexeme);
 
     lexer.expect(EQUAL);
 
@@ -39,6 +42,7 @@ struct InstructionNode * parse_assign_stmt(Token id_token) {
     */
     int first_primary_index = parse_primary();
 
+    // Could be op or SEMICOLON
     Token next_token = lexer.GetToken();
     
     /**
@@ -96,6 +100,8 @@ struct InstructionNode* parse_input_stmt() {
     */
 
     lexer.expect(SEMICOLON);
+
+    return input_instnode;
 }
 
 struct InstructionNode* parse_output_stmt() {
@@ -117,11 +123,15 @@ struct InstructionNode* parse_output_stmt() {
 }
 
 struct InstructionNode* parse_stmt() {
+    /**
+     * stmt -> assign_stmt | while_stmt | if_stmt | switch_stmt | for_stmt | output_stmt | input_stmt
+    */
     Token curr_token = lexer.GetToken();
 
     if (curr_token.token_type == IF) {
         return parse_if_stmt();
     } else if (curr_token.token_type == ID) {
+        // Assign statment starts with ID
         return parse_assign_stmt(curr_token);
     } else if (curr_token.token_type == WHILE) {
         //return parse_while_stmt();
@@ -139,6 +149,10 @@ struct InstructionNode* parse_stmt() {
 }
 
 struct InstructionNode* parse_stmt_list() {
+    /**
+     * stmt_list -> stmt stmt_list | stmt
+    */
+
     // Construct the current instruction for the current statement
     struct InstructionNode* curr_stmt = parse_stmt();
 
@@ -151,7 +165,8 @@ struct InstructionNode* parse_stmt_list() {
     // Recursively parse statement list
     if (next_token.token_type != RBRACE) {
         instList = parse_stmt_list();
-
+        curr_stmt->next = instList;
+        /*
         // The next subsequent instruction node will be coming 
         // from next statement
         if (curr_stmt->next != nullptr) {
@@ -164,13 +179,17 @@ struct InstructionNode* parse_stmt_list() {
             temp_instnode->next = instList;
         } else {
             curr_stmt->next = instList;
-        }
+            */
+        // }
     }
 
     return curr_stmt;
 }
 
 struct InstructionNode* parse_body() {
+    /**
+     * body -> LBRACE stmt list RBRACE
+    */
     lexer.expect(LBRACE);
     InstructionNode* instruction_entry = parse_stmt_list();
     lexer.expect(RBRACE);
@@ -179,6 +198,9 @@ struct InstructionNode* parse_body() {
 }
 
 struct InstructionNode* parse_if_stmt() {
+    /**
+     * if_stmt -> IF condition body
+    */
     struct InstructionNode * if_instnode = new InstructionNode;
 
     if_instnode->type = CJMP;
@@ -243,6 +265,9 @@ void parse_num() {
 }
 
 void parse_num_list() {
+    /**
+     * num list -> NUM num_list | NUM
+    */
     parse_num();
 
     if (lexer.peek(1).token_type == NUM) {
@@ -251,10 +276,16 @@ void parse_num_list() {
 }
 
 void parse_input() {
+    /**
+     * inputs -> num_list
+    */
     parse_num_list();
 }
 
 void parse_id_list() {
+    /**
+     * id_list -> ID COMMA id_list | ID
+    */
     Token curr_token = lexer.GetToken();
 
     // Allocate memory for this id token (variable)
@@ -269,11 +300,17 @@ void parse_id_list() {
 }
 
 void parse_var_section(){
+    /**
+     * var section -> id_list SEMICOLON
+    */
     parse_id_list();
     lexer.expect(SEMICOLON);
 }
 
 struct InstructionNode* parse_program() {
+    /**
+     * program -> var_section body inputs
+    */
     parse_var_section();
     InstructionNode * instruction_entry = parse_body();
     parse_input();

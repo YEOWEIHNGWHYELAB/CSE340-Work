@@ -10,11 +10,12 @@
 #include <cstring>
 #include <string>
 #include "execute.h"
+#include "instruction_debug.h"
 
 
 using namespace std;
 
-#define DEBUG 0     // 1 => Turn ON debugging, 0 => Turn OFF debugging
+#define DEBUG 0    // 1 => Turn ON debugging, 0 => Turn OFF debugging
 
 // Memory management for variables and constants
 int mem[1000];
@@ -38,27 +39,37 @@ void execute_program(struct InstructionNode * program) {
     struct InstructionNode * pc = program;
     int op1, op2, result;
 
-    while(pc != NULL)
-    {
-        switch(pc->type)
-        {
+    // print_type(pc);
+
+    while (pc != NULL) {
+        switch(pc->type) {
             case NOOP:
                 pc = pc->next;
                 break;
             case IN:
+                if (DEBUG == 1) {
+                    print_input_inst(pc);
+                }
 
                 mem[pc->input_inst.var_index] = inputs[next_input];
                 next_input++;
                 pc = pc->next;
                 break;
             case OUT:
+                if (DEBUG == 1) {
+                    print_output_inst(pc);
+                }
+
                 printf("%d ", mem[pc->output_inst.var_index]);
-		fflush(stdin);
+		        fflush(stdin);
                 pc = pc->next;
                 break;
             case ASSIGN:
-                switch(pc->assign_inst.op)
-                {
+                if (DEBUG == 1) {
+                    print_assign_inst(pc);
+                }
+
+                switch(pc->assign_inst.op) {
                     case OPERATOR_PLUS:
                         op1 = mem[pc->assign_inst.opernd1_index];
                         op2 = mem[pc->assign_inst.opernd2_index];
@@ -95,8 +106,7 @@ void execute_program(struct InstructionNode * program) {
                 }
                 op1 = mem[pc->cjmp_inst.opernd1_index];
                 op2 = mem[pc->cjmp_inst.opernd2_index];
-                switch(pc->cjmp_inst.condition_op)
-                {
+                switch(pc->cjmp_inst.condition_op) {
                     case CONDITION_GREATER:
                         if(op1 > op2)
                             pc = pc->next;
@@ -118,13 +128,13 @@ void execute_program(struct InstructionNode * program) {
                 }
                 break;
             case JMP:
-  
-                if (pc->jmp_inst.target == NULL)
-                {
+                if (pc->jmp_inst.target == NULL) {
                     debug("Error: pc->jmp_inst->target is null.\n");
                     exit(1);
                 }
+
                 pc = pc->jmp_inst.target;
+                
                 break;
             default:
                 debug("Error: invalid value for pc->type (%d).\n", pc->type);

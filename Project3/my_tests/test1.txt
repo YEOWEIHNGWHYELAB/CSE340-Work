@@ -1,0 +1,6 @@
+i, j;
+{
+	input i;
+    output i;
+}
+1 2 3
