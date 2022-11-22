@@ -24,6 +24,7 @@ Token expect(TokenType expected_type) {
 struct InstructionNode* parse_if_stmt();
 struct InstructionNode* parse_while_stmt();
 struct InstructionNode* parse_for_stmt();
+struct InstructionNode* parse_switch_stmt();
 
 ConditionalOperatorType get_condition(Token condition_token) {
     if (condition_token.token_type == GREATER) {
@@ -160,7 +161,7 @@ struct InstructionNode* parse_stmt() {
     } else if (curr_token.token_type == WHILE) {
         return parse_while_stmt();
     } else if (curr_token.token_type == SWITCH) {
-        //return parse_switch_stmt();
+        return parse_switch_stmt();
     } else if (curr_token.token_type == FOR) {
         return parse_for_stmt();
     } else if (curr_token.token_type == INPUT) {
@@ -387,6 +388,92 @@ struct InstructionNode* parse_for_stmt() {
     while_stmt->cjmp_inst.target = noop_instnode;
 
     return first_assign_stmt;
+}
+
+struct InstructionNode* parse_case(Token swich_id_token) {
+    expect(CASE);
+    Token num_token = expect(NUM);
+    expect(COLON);
+
+    InstructionNode* case_body = parse_body();
+
+    struct InstructionNode* if_instnode = new InstructionNode;
+    if_instnode->type = CJMP;
+    if_instnode->next = nullptr;
+
+    if_instnode->cjmp_inst.opernd1_index = location(swich_id_token.lexeme);
+    if_instnode->cjmp_inst.condition_op = CONDITION_NOTEQUAL;
+    memory_constant_allocation(num_token.lexeme);
+    if_instnode->cjmp_inst.opernd2_index = location(num_token.lexeme);
+
+    struct InstructionNode* no_op_instnode = new InstructionNode;
+    no_op_instnode->type = NOOP;
+    no_op_instnode->next = nullptr;
+
+    // Go to next if stmt as it is indeed NOTEQUAL
+    if_instnode->next = no_op_instnode;
+
+    struct InstructionNode* temp_instnode = case_body;
+    while (temp_instnode->next != nullptr) {
+        temp_instnode = temp_instnode->next;
+    }
+    temp_instnode->next = no_op_instnode;
+
+    // Go to case_body statement as its NOT NOTEQUAL
+    if_instnode->cjmp_inst.target = case_body;
+
+    if (lexer.peek(1).token_type == CASE) {
+        InstructionNode* next_case = parse_case(swich_id_token);
+        no_op_instnode->next = next_case;
+    }
+
+    return if_instnode;
+}
+
+struct InstructionNode* parse_switch_stmt() {
+    /**
+     * switch_stmt -> SWITCH ID LBRACE case_list RBRACE
+     * switch_stmt -> SWITCH ID LBRACE case_list default_case RBRACE
+     * 
+     * case_list -> case case_list | case
+     * case -> CASE NUM COLON body
+     * 
+     * default_case -> DEFAULT COLON body
+     * 
+     * IF var == n1 {
+     *      stmt list 1
+     *      goto label
+     * }
+     * ...
+     * IF var == nk {
+     *      stmt list k
+     *      goto label
+     * }
+     * stmt_list_default (optional)
+     * label:
+    */
+    Token switch_id_token = expect(ID);
+    switch_id_token.Print();
+    expect(LBRACE);
+
+    InstructionNode* case_instnode = parse_case(switch_id_token);
+
+    if (lexer.peek(1).token_type == RBRACE) {
+        expect(RBRACE);
+    } else {
+        expect(DEFAULT);
+        expect(COLON);
+
+        InstructionNode* default_instnode = parse_body();
+
+        InstructionNode* temp_instnode = case_instnode; 
+        while (temp_instnode->next != nullptr) {
+            temp_instnode = temp_instnode->next;
+        }
+        temp_instnode->next = default_instnode;
+    }
+
+    return case_instnode;
 }
 
 void parse_num() {
