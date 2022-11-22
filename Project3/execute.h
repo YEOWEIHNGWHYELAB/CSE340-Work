@@ -89,6 +89,7 @@ void debug(const char* format, ...);
 // You should write the following function:
 
 struct InstructionNode * parse_generate_intermediate_representation();
+int main();
 
 /*
   NOTE:

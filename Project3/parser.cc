@@ -1,4 +1,5 @@
-#include "iostream"
+#include <iostream>
+
 #include "addresser.h"
 #include "execute.h"
 #include "lexer.h"
@@ -165,8 +166,7 @@ struct InstructionNode* parse_stmt_list() {
     // Recursively parse statement list
     if (next_token.token_type != RBRACE) {
         instList = parse_stmt_list();
-        curr_stmt->next = instList;
-        /*
+        
         // The next subsequent instruction node will be coming 
         // from next statement
         if (curr_stmt->next != nullptr) {
@@ -179,8 +179,7 @@ struct InstructionNode* parse_stmt_list() {
             temp_instnode->next = instList;
         } else {
             curr_stmt->next = instList;
-            */
-        // }
+        }
     }
 
     return curr_stmt;
