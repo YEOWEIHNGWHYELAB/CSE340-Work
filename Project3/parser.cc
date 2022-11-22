@@ -432,12 +432,14 @@ struct InstructionNode* parse_case(Token swich_id_token, InstructionNode* skip_n
 
         InstructionNode* default_instnode = parse_body();
         no_op_instnode->next = default_instnode;
-        
+    
         struct InstructionNode* temp_defaultnode = default_instnode;
         while (temp_defaultnode->next != nullptr) {
             temp_defaultnode = temp_defaultnode->next;
         }
         temp_defaultnode->next = skip_node;
+    } else if (lexer.peek(1).token_type == RBRACE) {
+        no_op_instnode->next = skip_node;
     }
 
     return if_instnode;
@@ -468,6 +470,7 @@ struct InstructionNode* parse_switch_stmt() {
     Token switch_id_token = expect(ID);
     expect(LBRACE);
 
+    // If any of the switch statment evaluates to true then we skip
     struct InstructionNode* no_op_instnode_skip = new InstructionNode;
     no_op_instnode_skip->type = NOOP;
     no_op_instnode_skip->next = nullptr;

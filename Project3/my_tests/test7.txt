@@ -1,0 +1,23 @@
+a, b, c;
+{   
+    a = 1;
+    b = 2;
+    c = 3;
+
+    SWITCH a {
+        CASE 1 : { 
+            output b;
+        }
+        CASE 2 : { 
+            output c;
+        }
+        CASE 3: {
+            output a;
+        }
+    }
+
+    output a;
+    output b;
+    output c;
+}
+2 2 3
