@@ -15,5 +15,9 @@ a, b, c;
             output a;
         }
     }
+
+    output a;
+    output b;
+    output c;
 }
-4 2 3
+1 2 3

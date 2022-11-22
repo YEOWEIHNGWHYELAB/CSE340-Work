@@ -390,7 +390,7 @@ struct InstructionNode* parse_for_stmt() {
     return first_assign_stmt;
 }
 
-struct InstructionNode* parse_case(Token swich_id_token) {
+struct InstructionNode* parse_case(Token swich_id_token, InstructionNode* skip_node) {
     expect(CASE);
     Token num_token = expect(NUM);
     expect(COLON);
@@ -413,18 +413,31 @@ struct InstructionNode* parse_case(Token swich_id_token) {
     // Go to next if stmt as it is indeed NOTEQUAL
     if_instnode->next = no_op_instnode;
 
+    // Direct the body statement towards the end
     struct InstructionNode* temp_instnode = case_body;
     while (temp_instnode->next != nullptr) {
         temp_instnode = temp_instnode->next;
     }
-    temp_instnode->next = no_op_instnode;
+    temp_instnode->next = skip_node;
 
     // Go to case_body statement as its NOT NOTEQUAL
     if_instnode->cjmp_inst.target = case_body;
 
     if (lexer.peek(1).token_type == CASE) {
-        InstructionNode* next_case = parse_case(swich_id_token);
+        InstructionNode* next_case = parse_case(swich_id_token, skip_node);
         no_op_instnode->next = next_case;
+    } else if (lexer.peek(1).token_type == DEFAULT) {
+        expect(DEFAULT);
+        expect(COLON);
+
+        InstructionNode* default_instnode = parse_body();
+        no_op_instnode->next = default_instnode;
+        
+        struct InstructionNode* temp_defaultnode = default_instnode;
+        while (temp_defaultnode->next != nullptr) {
+            temp_defaultnode = temp_defaultnode->next;
+        }
+        temp_defaultnode->next = skip_node;
     }
 
     return if_instnode;
@@ -455,24 +468,13 @@ struct InstructionNode* parse_switch_stmt() {
     Token switch_id_token = expect(ID);
     expect(LBRACE);
 
-    InstructionNode* case_instnode = parse_case(switch_id_token);
+    struct InstructionNode* no_op_instnode_skip = new InstructionNode;
+    no_op_instnode_skip->type = NOOP;
+    no_op_instnode_skip->next = nullptr;
 
-    if (lexer.peek(1).token_type == RBRACE) {
-        expect(RBRACE);
-    } else {
-        expect(DEFAULT);
-        expect(COLON);
+    InstructionNode* case_instnode = parse_case(switch_id_token, no_op_instnode_skip);
 
-        InstructionNode* default_instnode = parse_body();
-
-        InstructionNode* temp_instnode = case_instnode; 
-        while (temp_instnode->next != nullptr) {
-            temp_instnode = temp_instnode->next;
-        }
-        temp_instnode->next = default_instnode;
-
-        expect(RBRACE);
-    }
+    expect(RBRACE);
 
     return case_instnode;
 }
