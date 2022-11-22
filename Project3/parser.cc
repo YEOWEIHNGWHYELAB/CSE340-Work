@@ -23,6 +23,7 @@ Token expect(TokenType expected_type) {
 // Pre-Definition
 struct InstructionNode* parse_if_stmt();
 struct InstructionNode* parse_while_stmt();
+struct InstructionNode* parse_for_stmt();
 
 ConditionalOperatorType get_condition(Token condition_token) {
     if (condition_token.token_type == GREATER) {
@@ -161,7 +162,7 @@ struct InstructionNode* parse_stmt() {
     } else if (curr_token.token_type == SWITCH) {
         //return parse_switch_stmt();
     } else if (curr_token.token_type == FOR) {
-        // return parse_for_stmt();
+        return parse_for_stmt();
     } else if (curr_token.token_type == INPUT) {
         return parse_input_stmt();
     } else if (curr_token.token_type == OUTPUT) {
@@ -332,7 +333,60 @@ struct InstructionNode* parse_while_stmt() {
 }
 
 struct InstructionNode* parse_for_stmt() {
+    /**
+     * for_stmt = FOR LPAREN assign_stmt condition SEMICOLON assign_stmt RPAREN body
+     * 
+     * assign_stmt_1
+     * WHILE condition 
+     * {
+     *      stmt_list
+     *      assign_stmt_2
+     * }
+    */
+    expect(LPAREN);
 
+    InstructionNode* first_assign_stmt = parse_assign_stmt(expect(ID));
+
+    // Parse condition
+    struct InstructionNode* while_stmt = new InstructionNode();
+    while_stmt->type = CJMP;
+    parse_condition(while_stmt);
+
+    first_assign_stmt->next = while_stmt;
+
+    expect(SEMICOLON);
+    InstructionNode* second_assign_stmt = parse_assign_stmt(expect(ID));
+    expect(RPAREN);
+    struct InstructionNode* while_body = parse_body();
+
+    while_stmt->next = while_body;
+    
+    // Create jmp node of type JMP and do not forget to set next field to nullptr
+    struct InstructionNode* jmp_node = new InstructionNode();
+    jmp_node->type = JMP;
+    jmp_node->next = nullptr;
+
+    // Set jmp->jmp_inst.target to inst
+    jmp_node->jmp_inst.target = while_stmt;
+
+    // Append jmp node to end of body of while
+    InstructionNode* temp_while = while_body;
+    while (temp_while->next != nullptr) {
+        temp_while = temp_while->next;
+    }
+    temp_while->next = second_assign_stmt;
+    second_assign_stmt->next = jmp_node;
+
+    // Create no-op node and attach it to the list of instruction after the jmp node
+    InstructionNode* noop_instnode = new InstructionNode();
+    noop_instnode->type = NOOP;
+    noop_instnode->next = nullptr;
+    jmp_node->next = noop_instnode;
+
+    // Set inst->cjmp_target.target to point to no-op node
+    while_stmt->cjmp_inst.target = noop_instnode;
+
+    return first_assign_stmt;
 }
 
 void parse_num() {
