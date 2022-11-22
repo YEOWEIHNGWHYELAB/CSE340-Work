@@ -3,12 +3,23 @@
 #include "addresser.h"
 #include "execute.h"
 #include "lexer.h"
-
+#include "error.h"
 
 using namespace std;
 
 // lexer for reading buffer input
 LexicalAnalyzer lexer;
+
+Token expect(TokenType expected_type) {
+    Token curr_token = lexer.GetToken();
+
+    if (curr_token.token_type != expected_type) {
+        parsing_error();
+    }
+
+    return curr_token;
+}
+
 
 struct InstructionNode* parse_if_stmt();
 
@@ -34,7 +45,7 @@ struct InstructionNode* parse_assign_stmt(Token id_token) {
     // What variable to assign to?
     assignment_instnode->assign_inst.left_hand_side_index = location(id_token.lexeme);
 
-    lexer.expect(EQUAL);
+    expect(EQUAL);
 
     /**
      * Can be primary or expr
@@ -76,7 +87,7 @@ struct InstructionNode* parse_assign_stmt(Token id_token) {
         assignment_instnode->assign_inst.opernd1_index = first_primary_index;
         assignment_instnode->assign_inst.opernd2_index = second_primary_index;
 
-        lexer.expect(SEMICOLON);
+        expect(SEMICOLON);
     }
 
     return assignment_instnode;
@@ -100,7 +111,7 @@ struct InstructionNode* parse_input_stmt() {
     next_input = next_input + 1;
     */
 
-    lexer.expect(SEMICOLON);
+    expect(SEMICOLON);
 
     return input_instnode;
 }
@@ -118,7 +129,7 @@ struct InstructionNode* parse_output_stmt() {
     output_instnode->output_inst.var_index = location(output_token.lexeme);
     output_instnode->next = nullptr;
 
-    lexer.expect(SEMICOLON);
+    expect(SEMICOLON);
     
     return output_instnode;
 }
@@ -189,9 +200,9 @@ struct InstructionNode* parse_body() {
     /**
      * body -> LBRACE stmt list RBRACE
     */
-    lexer.expect(LBRACE);
+    expect(LBRACE);
     InstructionNode* instruction_entry = parse_stmt_list();
-    lexer.expect(RBRACE);
+    expect(RBRACE);
 
     return instruction_entry;
 }
@@ -200,7 +211,7 @@ struct InstructionNode* parse_if_stmt() {
     /**
      * if_stmt -> IF condition body
     */
-    struct InstructionNode * if_instnode = new InstructionNode;
+    struct InstructionNode* if_instnode = new InstructionNode;
 
     if_instnode->type = CJMP;
 
@@ -293,7 +304,7 @@ void parse_id_list() {
     Token next_token = lexer.peek(1);
 
     if (next_token.token_type == COMMA) {
-        lexer.expect(COMMA);
+        expect(COMMA);
         parse_id_list();
     }
 }
@@ -303,7 +314,7 @@ void parse_var_section(){
      * var section -> id_list SEMICOLON
     */
     parse_id_list();
-    lexer.expect(SEMICOLON);
+    expect(SEMICOLON);
 }
 
 struct InstructionNode* parse_program() {

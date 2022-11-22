@@ -161,16 +161,6 @@ Token LexicalAnalyzer::GetToken()
     return token;
 }
 
-Token LexicalAnalyzer::expect(TokenType expected_type) {
-    Token curr_token = GetToken();
-
-    if (curr_token.token_type != expected_type) {
-        parsing_error();
-    }
-
-    return curr_token;
-}
-
 // peek requires that the argument "howFar" be positive.
 Token LexicalAnalyzer::peek(int howFar)
 {

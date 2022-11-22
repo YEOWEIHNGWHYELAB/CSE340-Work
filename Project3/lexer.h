@@ -34,7 +34,6 @@ class Token {
 class LexicalAnalyzer {
   public:
     Token GetToken();
-    Token expect(TokenType);
     Token peek(int);
     LexicalAnalyzer();
 
