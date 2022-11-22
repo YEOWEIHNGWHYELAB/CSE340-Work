@@ -99,8 +99,7 @@ void execute_program(struct InstructionNode * program) {
                 pc = pc->next;
                 break;
             case CJMP:
-                if (pc->cjmp_inst.target == NULL)
-                {
+                if (pc->cjmp_inst.target == NULL) {
                     debug("Error: pc->cjmp_inst->target is null.\n");
                     exit(1);
                 }

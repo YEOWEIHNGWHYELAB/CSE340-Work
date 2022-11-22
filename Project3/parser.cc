@@ -212,12 +212,16 @@ struct InstructionNode* parse_if_stmt() {
      * if_stmt -> IF condition body
     */
     struct InstructionNode* if_instnode = new InstructionNode;
-
     if_instnode->type = CJMP;
 
+    /**
+     * condition -> primary relop primary
+    */
     if_instnode->cjmp_inst.opernd1_index = parse_primary();
-
     Token condtion_token = lexer.GetToken();
+    if_instnode->cjmp_inst.opernd2_index = parse_primary();
+
+    // Determine the condition
     if (condtion_token.token_type == GREATER) {
         if_instnode->cjmp_inst.condition_op = CONDITION_GREATER;
     } else if (condtion_token.token_type == LESS) {
@@ -225,8 +229,6 @@ struct InstructionNode* parse_if_stmt() {
     } else {
         if_instnode->cjmp_inst.condition_op = CONDITION_NOTEQUAL;
     }
-
-    if_instnode->cjmp_inst.opernd2_index = parse_primary();
 
     /**
      * True branch
@@ -243,6 +245,8 @@ struct InstructionNode* parse_if_stmt() {
     no_op_instnode->type = NOOP;
     no_op_instnode->next = nullptr;
 
+    struct InstructionNode* temp_instnode = if_instnode->next; 
+
     /**
      * Append no-op node to the body of the if
      * 
@@ -253,11 +257,11 @@ struct InstructionNode* parse_if_stmt() {
      * initialize fields of any data structures
      * do not use uninitialized pointers
     */
-    while (if_instnode->next->next != nullptr) {
-        if_instnode->next = if_instnode->next->next;
+    while (temp_instnode->next != nullptr) {
+        temp_instnode = temp_instnode->next;
     }
 
-    if_instnode->next->next = no_op_instnode;
+    temp_instnode->next = no_op_instnode;
 
     /**
      * False branch
