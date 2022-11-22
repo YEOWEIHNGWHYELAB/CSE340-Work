@@ -453,7 +453,6 @@ struct InstructionNode* parse_switch_stmt() {
      * label:
     */
     Token switch_id_token = expect(ID);
-    switch_id_token.Print();
     expect(LBRACE);
 
     InstructionNode* case_instnode = parse_case(switch_id_token);
@@ -471,6 +470,8 @@ struct InstructionNode* parse_switch_stmt() {
             temp_instnode = temp_instnode->next;
         }
         temp_instnode->next = default_instnode;
+
+        expect(RBRACE);
     }
 
     return case_instnode;
