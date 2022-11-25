@@ -1,0 +1,36 @@
+curr, prev, sum, count, num;
+{
+    input num;
+    curr = 0;
+    prev = 1;
+    SWITCH num {
+        CASE 0 : { 
+            output curr;
+        }
+        CASE 1 : {
+            output curr;
+            curr = curr + prev;
+            output curr;
+        }
+        CASE 2: {
+            output curr;
+            curr = curr + prev;
+            output curr;
+            output curr;
+        }
+        DEFAULT : {
+            output curr;
+            curr = 1;
+            prev = 1;
+            output curr;
+            output curr;
+            FOR (count = 3; count < num; count = count + 1;) {
+                sum = curr + prev;
+                prev = curr;
+                curr = sum;
+                output curr;   
+            }
+        }
+    }
+}
+15
